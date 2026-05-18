@@ -90,7 +90,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.1</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.2</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -313,6 +313,33 @@ const PACKERS = [
   "KUNIYOSHI","ISHIZAKA","OKINAWA","JOP","SK_TRADING","その他"
 ];
 
+// ── PACKER → PLANT マップ ─────────────────────────────────
+const PACKER_PLANT_MAP = {
+  "TOKYO": [
+    "興栄紙材","山治紙業(千葉)","신정상점(綾瀬)","신정상점(入谷)",
+    "신정상점(浦和)","新井商店(松戸)","こづか(横浜北)","関東紙業","日興紙業商事","川鈴(第二営業所)"
+  ],
+  "KAWASUZU": ["川鈴(第二営業所)"],
+};
+
+function updatePlantField(key, n) {
+  const packerEl = document.getElementById(`${key}_packer_${n}`);
+  const fieldDiv = document.getElementById(`${key}_plant_field_${n}`);
+  if (!packerEl || !fieldDiv) return;
+  const curPlant = (fieldDiv.querySelector('select,input')?.value || '').trim();
+  const packer   = packerEl.value.split('（')[0];
+  const plants   = PACKER_PLANT_MAP[packer] || [];
+  if (plants.length > 0) {
+    const opts = ['', ...plants].map(p => {
+      const sel = p === curPlant ? ' selected' : '';
+      return `<option value="${p}"${sel}>${p || '-'}</option>`;
+    }).join('');
+    fieldDiv.innerHTML = `<select id="${key}_plant_${n}" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;">${opts}</select>`;
+  } else {
+    fieldDiv.innerHTML = `<input id="${key}_plant_${n}" value="${curPlant}" placeholder="例: TOKYO-KOTO" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;">`;
+  }
+}
+
 // ── 状態管理 ──────────────────────────────────────────────
 const state   = {};
 const blkCnt  = {};
@@ -335,8 +362,8 @@ function _blockHtml(key, n, hi, removable) {
     <div class="row-3">
       <div class="field"><label>BKG番号 ★</label><input class="required" id="${key}_bkg_${n}" value="${hi.bkg||''}" placeholder="例: TYOG71676500"></div>
       <div class="field"><label>コンテナ番号 ★</label><input class="required" id="${key}_ct_${n}" value="${hi.ct||''}" placeholder="例: ONEU5019216"></div>
-      <div class="field"><label>PACKER ★</label><select id="${key}_packer_${n}">${opts}</select></div>
-      <div class="field"><label>PLANT</label><input id="${key}_plant_${n}" value="${hi.plant||''}" placeholder="例: TOKYO-KOTO"></div>
+      <div class="field"><label>PACKER ★</label><select id="${key}_packer_${n}" onchange="updatePlantField('${key}',${n})">${opts}</select></div>
+      <div class="field"><label>PLANT</label><div id="${key}_plant_field_${n}"><input id="${key}_plant_${n}" value="${hi.plant||''}" placeholder="例: TOKYO-KOTO" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;"></div></div>
     </div>
     <div class="row-4">
       <div class="field"><label>シール番号</label><input id="${key}_seal_${n}" value="${hi.seal_no||''}" placeholder="例: DYL154005"></div>
@@ -352,6 +379,7 @@ function addBlock(key) {
   const tmp = document.createElement('div');
   tmp.innerHTML = _blockHtml(key, n, {}, true);
   document.getElementById(key + '_blocks').appendChild(tmp.firstElementChild);
+  updatePlantField(key, n);
 }
 
 function removeBlock(key, n) {
@@ -390,6 +418,9 @@ async function init() {
   Object.entries(CONFIRMED_DATA).forEach(([key, item]) => {
     state[key] = { ...item };
     area.appendChild(buildCard(key, item));
+    // PACKER 선택에 맞춰 PLANT 드롭다운 초기화
+    const cnt = blkCnt[key] || 1;
+    for (let n = 0; n < cnt; n++) updatePlantField(key, n);
   });
 
   if (anyConfirmed()) showSummary();
@@ -506,51 +537,4 @@ function updateProgress() {
   document.getElementById("progress").style.width = pct + "%";
 }
 
-function allDone() {
-  return Object.values(state).every(i => i.status !== "未確認");
-}
-function anyConfirmed() {
-  return Object.values(state).some(i => i.status === "確認完了");
-}
-
-// ── サマリー & ダウンロード ───────────────────────────────
-function showSummary() {
-  const area = document.getElementById("summary-area");
-  area.classList.add("show");
-
-  const confirmed = Object.values(state).filter(i => i.status === "確認完了");
-  const tbody = confirmed.flatMap(i => {
-    const arr = Array.isArray(i.human_input) ? i.human_input : [i.human_input || {}];
-    return arr.map((hi, idx) => `
-      <tr>
-        <td>${i.fax_file}${arr.length > 1 ? ` (${idx+1}/${arr.length})` : ''}</td>
-        <td>${hi?.bkg || "-"}</td><td>${hi?.ct || "-"}</td>
-        <td>${hi?.packer || "-"}</td><td>${hi?.seal_no || "-"}</td>
-        <td>${hi?.n_w || "-"}</td><td>${hi?.t_w || "-"}</td>
-        <td>${hi?.bales || "-"}</td>
-      </tr>`);
-  }).join("");
-
-  document.getElementById("summary-table").innerHTML = `
-    <tr><th>ファイル</th><th>BKG</th><th>コンテナ</th><th>PACKER</th><th>シール</th><th>N/W</th><th>T/W</th><th>梱数</th></tr>
-    ${tbody}`;
-  area.scrollIntoView({ behavior: "smooth" });
-}
-
-function downloadResults() {
-  const results = {
-    generated_at: new Date().toISOString(),
-    type:  "check_fax_confirmed",
-    items: Object.values(state).filter(i => i.status === "確認完了")
-  };
-  const blob = new Blob([JSON.stringify(results, null, 2)], {type:"application/json"});
-  const a    = document.createElement("a");
-  a.href     = URL.createObjectURL(blob);
-  a.download = "check_fax_results_" + new Date().toISOString().slice(0,10) + ".json";
-  a.click();
-}
-
-init();
-</script>
-</body>
-</html>
+function allDone() 
