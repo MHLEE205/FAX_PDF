@@ -32,7 +32,6 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-.row-half { display: grid; grid-template-columns: 1fr 3fr; gap: 8px; margin-bottom: 8px; }
 .field { display: flex; flex-direction: column; gap: 2px; }
 .field label { font-size: 11px; color: #888; font-weight: 500; }
 .field input, .field select { font-size: 12px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; background: #fff; color: #333; width: 100%; }
@@ -105,8 +104,8 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div id="cards-area"></div>
 <div class="summary" id="summary-area">
-  <h2>✅ 全件確認完了</h2>
-  <p style="font-size:12px; color:#666; margin-bottom:12px;">入力内容を確認してから報告してください。</p>
+  <h2>✅ 確認済み — 報告してください</h2>
+  <p style="font-size:12px; color:#666; margin-bottom:12px;">入力内容を確認してからダウンロードし、担当者に共有してください。</p>
   <table class="summary-table" id="summary-table"></table>
   <button class="btn-download" onclick="downloadResults()">📋 結果を報告</button>
 </div>
@@ -155,6 +154,44 @@ async function login() {
 function logout() {
   sessionStorage.removeItem('fax_access_token');
   location.reload();
+}
+
+// ── OAuth コールバック処理 ────────────────────────────────
+async function handleCallback() {
+  const params   = new URLSearchParams(window.location.search);
+  const code     = params.get('code');
+  const st       = params.get('state');
+  if (!code) return false;
+  const savedSt  = sessionStorage.getItem('oauth_state');
+  if (st !== savedSt) { console.error('OAuth state mismatch'); return false; }
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  if (!verifier)  { console.error('PKCE verifier missing');   return false; }
+  try {
+    const resp = await fetch(
+      `https://login.microsoftonline.com/${OAUTH.tenantId}/oauth2/v2.0/token`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id:     OAUTH.clientId,
+          grant_type:    'authorization_code',
+          code:          code,
+          redirect_uri:  OAUTH.redirectUri,
+          code_verifier: verifier,
+        })
+      }
+    );
+    if (!resp.ok) { console.error('token exchange failed', await resp.text()); return false; }
+    const data = await resp.json();
+    sessionStorage.setItem('fax_access_token', data.access_token);
+    sessionStorage.removeItem('pkce_verifier');
+    sessionStorage.removeItem('oauth_state');
+    history.replaceState({}, '', window.location.pathname);
+    return true;
+  } catch(e) {
+    console.error('handleCallback error', e);
+    return false;
+  }
 }
 
 async function _checkAuth() {
@@ -360,11 +397,11 @@ function _blockHtml(key, n, hi, removable) {
     ? `<div class="block-label">搬入票 ${n+1}ページ目</div>`
     : '';
   return `<div class="input-block" id="${key}_blk_${n}">${label}${rmBtn}
-    <div class="row-3">
+    <div class="row-4">
       <div class="field"><label>BKG番号 ★</label><input class="required" id="${key}_bkg_${n}" value="${hi.bkg||''}" placeholder="例: TYOG71676500"></div>
       <div class="field"><label>コンテナ番号 ★</label><input class="required" id="${key}_ct_${n}" value="${hi.ct||''}" placeholder="例: ONEU5019216"></div>
       <div class="field"><label>PACKER ★</label><select id="${key}_packer_${n}" onchange="updatePlantField('${key}',${n})">${opts}</select></div>
-      <div class="field"><label>PLANT</label><div id="${key}_plant_field_${n}"><input id="${key}_plant_${n}" value="${hi.plant||''}" placeholder="例: TOKYO-KOTO" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;"></div></div>
+      <div class="field"><label>PLANT</label><div id="${key}_plant_field_${n}"><input id="${key}_plant_${n}" value="${hi.plant||''}" placeholder="例: 新井商店(松戸)" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;"></div></div>
     </div>
     <div class="row-4">
       <div class="field"><label>シール番号</label><input id="${key}_seal_${n}" value="${hi.seal_no||''}" placeholder="例: DYL154005"></div>
@@ -390,6 +427,10 @@ function removeBlock(key, n) {
 
 // ── 初期化 ────────────────────────────────────────────────
 async function init() {
+  // OAuth コールバック処理 (Microsoftログイン後 ?code= をトークンに交換)
+  if (new URLSearchParams(window.location.search).has('code')) {
+    await handleCallback();
+  }
   const ok = await _checkAuth();
   if (!ok) {
     document.getElementById('login-gate').style.display = 'flex';
@@ -419,7 +460,6 @@ async function init() {
   Object.entries(CONFIRMED_DATA).forEach(([key, item]) => {
     state[key] = { ...item };
     area.appendChild(buildCard(key, item));
-    // PACKER 선택에 맞춰 PLANT 드롭다운 초기화
     const cnt = blkCnt[key] || 1;
     for (let n = 0; n < cnt; n++) updatePlantField(key, n);
   });
@@ -499,11 +539,11 @@ function confirmItem(key) {
     if (!bkg || !ct || !pac) { alert("BKG番号・コンテナ番号・PACKERは必須です。"); return; }
     inputs.push({
       bkg, ct, packer: pac,
-      plant:     (document.getElementById(`${key}_plant_${n}`)?.value || '').trim(),
-      seal_no:   (document.getElementById(`${key}_seal_${n}`)?.value  || '').trim(),
-      n_w:       (document.getElementById(`${key}_nw_${n}`)?.value    || '').trim(),
-      t_w:       (document.getElementById(`${key}_tw_${n}`)?.value    || '').trim(),
-      bales:     (document.getElementById(`${key}_bales_${n}`)?.value || '').trim(),
+      plant:   (document.getElementById(`${key}_plant_${n}`)?.value  || '').trim(),
+      seal_no: (document.getElementById(`${key}_seal_${n}`)?.value   || '').trim(),
+      n_w:     (document.getElementById(`${key}_nw_${n}`)?.value     || '').trim(),
+      t_w:     (document.getElementById(`${key}_tw_${n}`)?.value     || '').trim(),
+      bales:   (document.getElementById(`${key}_bales_${n}`)?.value  || '').trim(),
     });
   }
   state[key].status       = "確認完了";
@@ -538,4 +578,49 @@ function updateProgress() {
   document.getElementById("progress").style.width = pct + "%";
 }
 
-function allDo
+function anyConfirmed() {
+  return Object.values(state).some(i => i.status === "確認完了");
+}
+
+// ── サマリー & ダウンロード ───────────────────────────────
+function showSummary() {
+  const area = document.getElementById("summary-area");
+  area.classList.add("show");
+
+  const confirmed = Object.values(state).filter(i => i.status === "確認完了");
+  const tbody = confirmed.flatMap(i => {
+    const arr = Array.isArray(i.human_input) ? i.human_input : [i.human_input || {}];
+    return arr.map((hi, idx) => `
+      <tr>
+        <td>${i.fax_file}${arr.length > 1 ? ` (${idx+1}/${arr.length})` : ''}</td>
+        <td>${hi?.bkg || "-"}</td><td>${hi?.ct || "-"}</td>
+        <td>${hi?.packer || "-"}</td><td>${hi?.plant || "-"}</td>
+        <td>${hi?.seal_no || "-"}</td>
+        <td>${hi?.n_w || "-"}</td><td>${hi?.t_w || "-"}</td>
+        <td>${hi?.bales || "-"}</td>
+      </tr>`);
+  }).join("");
+
+  document.getElementById("summary-table").innerHTML = `
+    <tr><th>ファイル</th><th>BKG</th><th>コンテナ</th><th>PACKER</th><th>PLANT</th><th>シール</th><th>N/W</th><th>T/W</th><th>梱数</th></tr>
+    ${tbody}`;
+  area.scrollIntoView({ behavior: "smooth" });
+}
+
+function downloadResults() {
+  const results = {
+    generated_at: new Date().toISOString(),
+    type:  "check_fax_confirmed",
+    items: Object.values(state).filter(i => i.status === "確認完了")
+  };
+  const blob = new Blob([JSON.stringify(results, null, 2)], {type:"application/json"});
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "check_fax_results_" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+}
+
+init();
+</script>
+</body>
+</html>
