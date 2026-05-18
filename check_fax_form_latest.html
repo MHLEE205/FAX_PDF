@@ -394,7 +394,7 @@ async function init() {
     area.appendChild(buildCard(key, item));
   });
 
-  if (allDone()) showSummary();
+  if (anyConfirmed()) showSummary();
 }
 
 // ── カード生成 ─────────────────────────────────────────────
@@ -488,7 +488,7 @@ function confirmItem(key) {
   doneEl.textContent = `✅ ${userName || 'ユーザー'}さんが確認完了しました（${t}）`;
   doneEl.classList.add("show");
   updateProgress();
-  if (allDone()) showSummary();
+  if (anyConfirmed()) showSummary();
 }
 
 // ── スキップ ──────────────────────────────────────────────
@@ -497,7 +497,7 @@ function skipItem(key) {
   const card = document.getElementById("card-" + key.replace(/\./g,"_"));
   card.style.opacity = "0.4";
   updateProgress();
-  if (allDone()) showSummary();
+  if (anyConfirmed()) showSummary();
 }
 
 // ── 進捗 ─────────────────────────────────────────────────
@@ -510,6 +510,9 @@ function updateProgress() {
 
 function allDone() {
   return Object.values(state).every(i => i.status !== "未確認");
+}
+function anyConfirmed() {
+  return Object.values(state).some(i => i.status === "確認完了");
 }
 
 // ── サマリー & ダウンロード ───────────────────────────────
