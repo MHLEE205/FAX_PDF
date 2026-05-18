@@ -90,7 +90,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.0</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.1</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -106,9 +106,9 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 <div id="cards-area"></div>
 <div class="summary" id="summary-area">
   <h2>✅ 全件確認完了</h2>
-  <p style="font-size:12px; color:#666; margin-bottom:12px;">入力内容をダウンロードしてください。担当者は所定のフォルダに保存してください。</p>
+  <p style="font-size:12px; color:#666; margin-bottom:12px;">入力内容を確認してから報告してください。</p>
   <table class="summary-table" id="summary-table"></table>
-  <button class="btn-download" onclick="downloadResults()">📥 結果をダウンロード (JSON)</button>
+  <button class="btn-download" onclick="downloadResults()">📋 結果を報告</button>
 </div>
 
 <div class="footer">🤖 このフォームはAIが自動生成しています。&nbsp;<strong>✦ Powered by LEENAI Automation System</strong></div>
@@ -336,15 +336,13 @@ function _blockHtml(key, n, hi, removable) {
       <div class="field"><label>BKG番号 ★</label><input class="required" id="${key}_bkg_${n}" value="${hi.bkg||''}" placeholder="例: TYOG71676500"></div>
       <div class="field"><label>コンテナ番号 ★</label><input class="required" id="${key}_ct_${n}" value="${hi.ct||''}" placeholder="例: ONEU5019216"></div>
       <div class="field"><label>PACKER ★</label><select id="${key}_packer_${n}">${opts}</select></div>
+      <div class="field"><label>PLANT</label><input id="${key}_plant_${n}" value="${hi.plant||''}" placeholder="例: TOKYO-KOTO"></div>
     </div>
     <div class="row-4">
       <div class="field"><label>シール番号</label><input id="${key}_seal_${n}" value="${hi.seal_no||''}" placeholder="例: DYL154005"></div>
       <div class="field"><label>正味重量 (kg)</label><input id="${key}_nw_${n}" value="${hi.n_w||''}" placeholder="例: 22280"></div>
       <div class="field"><label>風袋重量 (kg)</label><input id="${key}_tw_${n}" value="${hi.t_w||''}" placeholder="例: 3700"></div>
       <div class="field"><label>梱数</label><input id="${key}_bales_${n}" value="${hi.bales||''}" placeholder="例: 22"></div>
-    </div>
-    <div class="row-half">
-      <div class="field"><label>作業日</label><input id="${key}_date_${n}" value="${hi.work_date||''}" placeholder="例: 2026-05-07"></div>
     </div>
   </div>`;
 }
@@ -469,11 +467,11 @@ function confirmItem(key) {
     if (!bkg || !ct || !pac) { alert("BKG番号・コンテナ番号・PACKERは必須です。"); return; }
     inputs.push({
       bkg, ct, packer: pac,
+      plant:     (document.getElementById(`${key}_plant_${n}`)?.value || '').trim(),
       seal_no:   (document.getElementById(`${key}_seal_${n}`)?.value  || '').trim(),
       n_w:       (document.getElementById(`${key}_nw_${n}`)?.value    || '').trim(),
       t_w:       (document.getElementById(`${key}_tw_${n}`)?.value    || '').trim(),
       bales:     (document.getElementById(`${key}_bales_${n}`)?.value || '').trim(),
-      work_date: (document.getElementById(`${key}_date_${n}`)?.value  || '').trim(),
     });
   }
   state[key].status       = "確認完了";
