@@ -43,6 +43,8 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 .btn-skip:hover { background: #eee; }
 .btn-confirm { font-size: 12px; padding: 5px 16px; border: 1px solid #4a90d9; border-radius: 4px; background: #4a90d9; color: #fff; cursor: pointer; font-weight: 500; }
 .btn-confirm:hover { background: #357abd; }
+.btn-unmatch { font-size: 12px; padding: 5px 14px; border: 1px solid #e04040; border-radius: 4px; background: #fff5f5; color: #e04040; cursor: pointer; }
+.btn-unmatch:hover { background: #ffe0e0; }
 .done-overlay { display: none; padding: 12px 14px; background: #f0fff0; border-top: 1px solid #a8d5b0; font-size: 12px; color: #27ae60; }
 .done-overlay.show { display: block; }
 .summary { background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; padding: 16px 20px; margin-top: 16px; display: none; }
@@ -448,6 +450,7 @@ function buildCard(key, item) {
       <button class="btn-add-block" onclick="addBlock('${key}')">+ 別の搬入票を追加</button>
       <div class="card-footer">
         <button class="btn-skip" onclick="skipItem('${key}')">スキップ</button>
+        <button class="btn-unmatch" onclick="markUnmatched('${key}')">対象外</button>
         <button class="btn-confirm" onclick="confirmItem('${key}')">✓ 確認完了</button>
       </div>
     </div>
@@ -496,6 +499,19 @@ function skipItem(key) {
   state[key].status = "スキップ";
   const card = document.getElementById("card-" + key.replace(/\./g,"_"));
   card.style.opacity = "0.4";
+  updateProgress();
+  if (anyConfirmed()) showSummary();
+}
+
+// [PR-NOTIFY-UNMATCHED 2026-06-16]: 対象外マーク
+function markUnmatched(key) {
+  state[key].status = "対象外";
+  const card = document.getElementById("card-" + key.replace(/\./g,"_"));
+  card.style.outline = "2px solid #e04040";
+  card.style.opacity = "0.7";
+  const doneEl = document.getElementById("done-" + key);
+  doneEl.textContent = "🚫 対象外としてマークしました";
+  doneEl.classList.add("show");
   updateProgress();
   if (anyConfirmed()) showSummary();
 }
@@ -572,7 +588,8 @@ async function uploadResults() {
   const results  = {
     generated_at: now.toISOString(),
     type:  'check_fax_confirmed',
-    items: Object.values(state).filter(i => i.status === '確認完了')
+    // [PR-NOTIFY-UNMATCHED 2026-06-16]: 対象外 も送信対象に含める
+    items: Object.values(state).filter(i => i.status === '確認完了' || i.status === '対象外')
   };
   const body     = JSON.stringify(results, null, 2);
   const pathSegs = ['Shared Documents','古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_FAX','_CONFIRMED', fileName];
@@ -959,6 +976,7 @@ function buildModeDCard(item, idx) {
       ${ctRows}
       <div class="card-footer">
         <button class="btn-skip" onclick="skipMdCard(${idx})">スキップ</button>
+        <button class="btn-unmatch" onclick="markUnmatchedMd(${idx})">対象外</button>
         <button class="btn-confirm" onclick="confirmHannyuhyoCard(${idx})">確認完了</button>
       </div>
     </div>
@@ -968,6 +986,40 @@ function buildModeDCard(item, idx) {
 
 function skipMdCard(idx) {
   document.getElementById('md-card-' + idx).style.opacity = '0.4';
+}
+
+// [PR-NOTIFY-UNMATCHED 2026-06-16]: 搬入票 対象外
+async function markUnmatchedMd(idx) {
+  const token = sessionStorage.getItem('fax_access_token');
+  const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
+  if (!item) return;
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const payload = {
+    generated_at: now.toISOString(),
+    type:         'hannyuhyo_confirmed',
+    unmatched:    true,
+    iv_no:        item.iv_no,
+    pdf_name:     item.pdf_name,
+    pdf_path:     item.pdf_path,
+    confirmed_by: userName || '',
+    confirmed_cts: [],
+  };
+  const fileName = `hannyuhyo_confirmed_${ts}.json`;
+  const pathSegs = ['Shared Documents','古紙','-. 古紙書類',
+                    '▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
+  if (!token) { alert('認証が必要です'); return; }
+  try {
+    await _uploadJsonToPath(pathSegs, JSON.stringify(payload, null, 2), token);
+    const card = document.getElementById('md-card-' + idx);
+    card.style.outline  = '2px solid #e04040';
+    card.style.opacity  = '0.7';
+    document.getElementById('md-done-' + idx).textContent = '🚫 対象外として送信しました';
+    document.getElementById('md-done-' + idx).classList.add('show');
+  } catch(e) {
+    alert('送信失敗: ' + e.message);
+  }
 }
 
 async function confirmHannyuhyoCard(idx) {
