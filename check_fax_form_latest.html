@@ -592,7 +592,7 @@ async function uploadResults() {
     items: Object.values(state).filter(i => i.status === '確認完了' || i.status === '対象外')
   };
   const body     = JSON.stringify(results, null, 2);
-  const pathSegs = ['Shared Documents','古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_FAX','_CONFIRMED', fileName];
+  const pathSegs = ['▲ LEENAI 通関作業中','PHOTO','_FAX','_CONFIRMED', fileName];
   if (!token) {
     console.warn('uploadResults: no token — fallback to download');
     downloadResults();
@@ -737,8 +737,7 @@ async function confirmMcCard(idx) {
         confirmed_at: new Date().toISOString(),
     };
     const fileName = `correction_results_${ts}.json`;
-    const pathSegs = ['Shared Documents','古紙','-. 古紙書類',
-                      '▲ LEENAI 通関作業中','PHOTO','_CORRECTION','_CONFIRMED', fileName];
+    const pathSegs = ['▲ LEENAI 通関作業中','PHOTO','_CORRECTION','_CONFIRMED', fileName];
     try {
         await _uploadJsonToPath(pathSegs, payload, token);
         card.style.opacity = '0.4';
@@ -766,8 +765,7 @@ async function archiveMcCard(idx) {
         confirmed_at: new Date().toISOString(),
     };
     const fileName = `correction_results_${ts}.json`;
-    const pathSegs = ['Shared Documents','古紙','-. 古紙書類',
-                      '▲ LEENAI 通関作業中','PHOTO','_CORRECTION','_CONFIRMED', fileName];
+    const pathSegs = ['▲ LEENAI 通関作業中','PHOTO','_CORRECTION','_CONFIRMED', fileName];
     try {
         await _uploadJsonToPath(pathSegs, payload, token);
         const card = document.getElementById('mc-card-' + idx);
@@ -1007,8 +1005,7 @@ async function markUnmatchedMd(idx) {
     confirmed_cts: [],
   };
   const fileName = `hannyuhyo_confirmed_${ts}.json`;
-  const pathSegs = ['Shared Documents','古紙','-. 古紙書類',
-                    '▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
+  const pathSegs = ['▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
   if (!token) { alert('認証が必要です'); return; }
   try {
     await _uploadJsonToPath(pathSegs, JSON.stringify(payload, null, 2), token);
@@ -1051,8 +1048,7 @@ async function confirmHannyuhyoCard(idx) {
     confirmed_cts: confirmedCts,
   };
   const fileName = `hannyuhyo_confirmed_${ts}.json`;
-  const pathSegs = ['Shared Documents','古紙','-. 古紙書類',
-                    '▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
+  const pathSegs = ['▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
   if (!token) { alert('認証が必要です'); return; }
   try {
     await _uploadJsonToPath(pathSegs, payload, token);
