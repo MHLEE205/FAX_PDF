@@ -232,50 +232,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20260610112243-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260610112243-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\_FAX\\_CHECK_FAX\\20260610112243-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-06-10T11:22:43+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-06-16T02:54:57.198795+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260611094436-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260611094436-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\_FAX\\_CHECK_FAX\\20260611094436-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-06-11T09:44:36+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-06-16T02:54:57.198795+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260611111027-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260611111027-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\_FAX\\_CHECK_FAX\\20260611111027-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-06-11T11:10:27+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-06-16T02:54:57.198795+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
@@ -294,6 +251,24 @@ function updatePlantField(key, n) {
     fieldDiv.innerHTML = `<input id="${key}_plant_${n}" value="${curPlant}" placeholder="例: TOKYO-KOTO" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;">`;
   }
 }
+
+// ── PACKER マスター ───────────────────────────────────────
+const PACKERS = [
+  "","OOMOTO（大本紙料）","KAWASUZU（川勝商事）","KANEKO（金子商事）",
+  "KOKUSAI（国際紙業）","KYOKUSHIN（極真）","DAIWA（大和紙料）",
+  "TOKYO","MIYAZAKI","HANWA","FUJI","ECOSTYLE","KODUKA",
+  "KUNIYOSHI","ISHIZAKA","OKINAWA","JOP","SK_TRADING","その他"
+];
+
+// ── PACKER → PLANT マップ ─────────────────────────────────
+const PACKER_PLANT_MAP = {
+  "TOKYO": [
+    "興栄紙材","山治紙業(千葉)",
+    "新井商店(松戸)","新井商店(綾瀬)","新井商店(入谷)","新井商店(浦和)",
+    "こづか(横浜北)","関東紙業","日興紙業商事","川鈴(第二営業所)"
+  ],
+  "KAWASUZU": ["川鈴(第二営業所)"],
+};
 
 // ── 状態管理 ──────────────────────────────────────────────
 const state   = {};
