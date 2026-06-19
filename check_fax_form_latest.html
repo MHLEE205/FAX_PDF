@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.4</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.5</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -894,33 +894,44 @@ function renderModeD() {
     return;
   }
   area.innerHTML = items.map((item, idx) => buildModeDCard(item, idx)).join('');
+  initCtConfirmButtons();
 }
 
 function buildModeDCard(item, idx) {
   const cts = item.cts || [];
   const ctRows = cts.length ? cts.map((ct, ci) => `
     <div style="border:1px solid #e8e8e8;border-radius:6px;padding:10px;margin-bottom:8px;background:#fafafa;">
-      <div style="font-size:12px;font-weight:600;margin-bottom:6px;">${ct.ct_no || '(CT 미매핑)'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:12px;font-weight:600;">${ct.ct_no || '(CT 미매핑)'}</div>
+        <button id="md-ct-confirm-${idx}-${ci}" data-checked="false"
+          onclick="toggleCtConfirm(${idx},${ci})"
+          disabled
+          style="font-size:11px;padding:3px 10px;border:none;border-radius:4px;background:#e0e0e0;color:#aaa;cursor:not-allowed;font-weight:600;">CT確認</button>
+      </div>
       <div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:4px;">
         <div class="field" style="flex:1.5;min-width:90px;"><label>SEAL 반입표</label>
           <input id="md-seal-d-${idx}-${ci}" type="text" value="${ct.seal_from_pdf||''}"
-            placeholder="씰번호"
+            placeholder="씰번호" oninput="checkCtFields(${idx},${ci})"
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;background:${ct.seal_from_pdf?'#f8fff8':'#fff8f8'};width:100%;">
         </div>
         <div class="field" style="flex:1;min-width:70px;"><label>N/W (kg)</label>
           <input id="md-nw-${idx}-${ci}" type="number" value="${ct.n_w??''}"
+            oninput="checkCtFields(${idx},${ci})"
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;width:100%;">
         </div>
         <div class="field" style="flex:1;min-width:70px;"><label>T/W 반입표 (kg)</label>
           <input id="md-tw-d-${idx}-${ci}" type="number" value="${ct.t_w_from_pdf??''}"
+            oninput="checkCtFields(${idx},${ci})"
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;width:100%;">
         </div>
         <div class="field" style="flex:1;min-width:70px;"><label>G/W (kg)</label>
           <input id="md-gw-${idx}-${ci}" type="number" value="${ct.g_w??''}"
+            oninput="checkCtFields(${idx},${ci})"
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;width:100%;">
         </div>
         <div class="field" style="flex:0.8;min-width:55px;"><label>bales</label>
           <input id="md-bales-${idx}-${ci}" type="number" value="${ct.bales??''}"
+            oninput="checkCtFields(${idx},${ci})"
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;width:100%;">
         </div>
       </div>
@@ -947,6 +958,46 @@ function buildModeDCard(item, idx) {
     </div>
     <div class="done-overlay" id="md-done-${idx}">✅ 送信済み</div>
   </div>`;
+}
+
+function checkCtFields(idx, ci) {
+  const seal  = (document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || '').trim();
+  const nw    = (document.getElementById(`md-nw-${idx}-${ci}`)?.value    || '').trim();
+  const tw    = (document.getElementById(`md-tw-d-${idx}-${ci}`)?.value  || '').trim();
+  const gw    = (document.getElementById(`md-gw-${idx}-${ci}`)?.value    || '').trim();
+  const bales = (document.getElementById(`md-bales-${idx}-${ci}`)?.value || '').trim();
+  const allFilled = seal && nw && tw && gw && bales;
+  const btn = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+  if (!btn) return;
+  if (allFilled) {
+    btn.disabled = false;
+    btn.style.background = btn.dataset.checked === 'true' ? '#2e7d32' : '#1976d2';
+    btn.style.color  = '#fff';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.dataset.checked = 'false';
+    btn.textContent = 'CT確認';
+    btn.style.background = '#e0e0e0';
+    btn.style.color  = '#aaa';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+function toggleCtConfirm(idx, ci) {
+  const btn = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+  if (!btn || btn.disabled) return;
+  const isChecked = btn.dataset.checked === 'true';
+  btn.dataset.checked = isChecked ? 'false' : 'true';
+  btn.textContent     = isChecked ? 'CT確認' : '✓ 完了';
+  btn.style.background = isChecked ? '#1976d2' : '#2e7d32';
+}
+
+function initCtConfirmButtons() {
+  document.querySelectorAll('[id^="md-ct-confirm-"]').forEach(btn => {
+    const m = btn.id.match(/md-ct-confirm-(\d+)-(\d+)/);
+    if (m) checkCtFields(parseInt(m[1]), parseInt(m[2]));
+  });
 }
 
 function skipMdCard(idx) {
@@ -991,15 +1042,23 @@ async function confirmHannyuhyoCard(idx) {
   const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
   if (!item) return;
   const cts = item.cts || [];
-  const confirmedCts = cts.map((ct, ci) => ({
-    ct_no:           ct.ct_no,
-    seal_from_pdf:   document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || null,
-    n_w:    parseFloat(document.getElementById(`md-nw-${idx}-${ci}`)?.value)    || null,
-    t_w:    parseFloat(document.getElementById(`md-tw-d-${idx}-${ci}`)?.value)  || null,
-    g_w:    parseFloat(document.getElementById(`md-gw-${idx}-${ci}`)?.value)    || null,
-    bales:  parseInt(document.getElementById(`md-bales-${idx}-${ci}`)?.value)   || null,
-    confirmed_at: new Date().toISOString(),
-  }));
+  const confirmedCts = cts.map((ct, ci) => {
+    const btn = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+    if (btn?.dataset.checked !== 'true') return null;
+    return {
+      ct_no:         ct.ct_no,
+      seal_from_pdf: document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || null,
+      n_w:    parseFloat(document.getElementById(`md-nw-${idx}-${ci}`)?.value)   || null,
+      t_w:    parseFloat(document.getElementById(`md-tw-d-${idx}-${ci}`)?.value) || null,
+      g_w:    parseFloat(document.getElementById(`md-gw-${idx}-${ci}`)?.value)   || null,
+      bales:  parseInt(document.getElementById(`md-bales-${idx}-${ci}`)?.value)  || null,
+      confirmed_at: new Date().toISOString(),
+    };
+  }).filter(Boolean);
+  if (!confirmedCts.length) {
+    alert('CT確認ボタンを押してから送信してください');
+    return;
+  }
 
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
