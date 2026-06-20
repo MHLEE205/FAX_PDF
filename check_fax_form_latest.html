@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.6</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.9</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -118,6 +118,11 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
     <div class="meta" id="page-meta"></div>
     <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
       <span id="user-display" style="font-size:12px; color:#555;"></span>
+      <button id="btn-send-all" onclick="sendAll()"
+        style="font-size:11px; padding:3px 10px; border:1px solid #27ae60; border-radius:4px;
+               background:#27ae60; color:#fff; cursor:pointer; display:none; margin-right:4px;">
+        📤 전체 송신
+      </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
   </div>
@@ -314,6 +319,156 @@ function removeBlock(key, n) {
   if (el) el.remove();
 }
 
+// [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] ────────────────────────────
+function _refreshSendAllBtn() {
+  const hasFax = Object.values(state).some(i => i.status === '確認予定' || i.status === '対象外');
+  const hasMd  = mdPending.size > 0;
+  const btn = document.getElementById('btn-send-all');
+  if (!btn) return;
+  if (hasFax || hasMd) {
+    btn.style.display = 'inline';
+    const n = Object.values(state).filter(i => i.status === '確認予定' || i.status === '対象外').length + mdPending.size;
+    btn.textContent = `📤 전체 송신 (${n}건)`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+async function _doConfirmHannyuhyoCard(idx) {
+  const token = sessionStorage.getItem('fax_access_token');
+  const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
+  if (!item || !token) return;
+  const cts = item.cts || [];
+  const confirmedCts = cts.map((ct, ci) => {
+    const b = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+    if (b?.dataset.checked !== 'true') return null;
+    return {
+      ct_no:         ct.ct_no,
+      seal_from_pdf: document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || null,
+      n_w:    parseFloat(document.getElementById(`md-nw-${idx}-${ci}`)?.value)   || null,
+      t_w:    parseFloat(document.getElementById(`md-tw-d-${idx}-${ci}`)?.value) || null,
+      g_w:    parseFloat(document.getElementById(`md-gw-${idx}-${ci}`)?.value)   || null,
+      bales:  parseInt(document.getElementById(`md-bales-${idx}-${ci}`)?.value)  || null,
+      confirmed_at: new Date().toISOString(),
+    };
+  }).filter(Boolean);
+  const addedRows = _addCtRows[idx] || [];
+  for (let n = 0; n < addedRows.length; n++) {
+    const ct_no = (document.getElementById(`add-ct-no-${idx}-${n}`)?.value || '').trim().toUpperCase();
+    if (!ct_no) continue;
+    confirmedCts.push({
+      ct_no,
+      seal_from_pdf: document.getElementById(`add-seal-${idx}-${n}`)?.value || null,
+      n_w:   parseFloat(document.getElementById(`add-nw-${idx}-${n}`)?.value)    || null,
+      t_w:   parseFloat(document.getElementById(`add-tw-${idx}-${n}`)?.value)    || null,
+      g_w:   parseFloat(document.getElementById(`add-gw-${idx}-${n}`)?.value)    || null,
+      bales: parseInt(document.getElementById(`add-bales-${idx}-${n}`)?.value)   || null,
+    });
+  }
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const payload = {
+    generated_at:  now.toISOString(),
+    type:          'hannyuhyo_confirmed',
+    iv_no:         item.iv_no,
+    pdf_names:     item.pdf_names || [],
+    pdf_paths:     item.pdf_paths || [],
+    confirmed_by:  userName || '',
+    confirmed_cts: confirmedCts,
+  };
+  const fileName = `hannyuhyo_confirmed_${ts}.json`;
+  const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
+  await _uploadJsonToPath(pathSegs, payload, token);
+  document.getElementById('md-done-' + idx).textContent = '✅ 送信済み';
+  document.getElementById('md-card-' + idx).classList.add('done');
+}
+
+async function sendAll() {
+  const btn = document.getElementById('btn-send-all');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 送信中...'; }
+  try {
+    const hasFax = Object.values(state).some(i => i.status === '確認予定' || i.status === '対象外');
+    if (hasFax) {
+      Object.values(state).forEach(i => { if (i.status === '確認予定') i.status = '確認完了'; });
+      await uploadResults();
+    }
+    const mdArr = [...mdPending].sort((a, b) => a - b);
+    for (const idx of mdArr) {
+      await _doConfirmHannyuhyoCard(idx);
+      mdPending.delete(idx);
+    }
+    if (btn) { btn.textContent = '✅ 送信完了'; btn.style.background = '#155724'; btn.style.borderColor = '#155724'; }
+  } catch(e) {
+    alert('送信失敗: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '📤 전체 송신'; }
+  }
+}
+// ── END PR-HANNYUHYO-CONFIRM-TOGGLE ──────────────────────────────
+
+// [PR-HANNYUHYO-PENDING-INJECT + PR-HANNYUHYO-BKG-REASSIGN 2026-06-20]
+function renderAddCtForm(iv_no, idx) {
+  return `<div style="padding:4px 0 2px;">
+    <div style="font-size:11px;color:#aaa;">CT情報なし — CT番号を入力して反入票情報を登録できます</div>
+  </div>`;
+}
+
+let _addCtRows = {};
+
+function addCtRow(idx, iv_no) {
+  if (!_addCtRows[idx]) _addCtRows[idx] = [];
+  const n = _addCtRows[idx].length;
+  _addCtRows[idx].push({});
+  const container = document.getElementById(`add-ct-list-${idx}`);
+  const row = document.createElement('div');
+  row.id = `add-ct-row-${idx}-${n}`;
+  row.style.cssText = 'border:1px solid #ddd;border-radius:4px;padding:8px;margin-bottom:6px;background:#fffbe6;';
+  row.innerHTML = `
+    <div style="font-size:11px;font-weight:bold;margin-bottom:6px;">CT番号 <span style="color:red">*</span></div>
+    <input id="add-ct-no-${idx}-${n}" placeholder="例: YMMU1234567"
+      style="width:100%;font-size:13px;padding:5px;border:1px solid #ccc;border-radius:4px;margin-bottom:8px;"
+      oninput="this.value=this.value.toUpperCase()">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:6px;font-size:11px;">
+      <div>SEAL<br><input id="add-seal-${idx}-${n}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:3px;font-size:12px;"></div>
+      <div>N/W(kg)<br><input id="add-nw-${idx}-${n}" type="number" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:3px;font-size:12px;"></div>
+      <div>T/W(kg)<br><input id="add-tw-${idx}-${n}" type="number" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:3px;font-size:12px;"></div>
+      <div>G/W(kg)<br><input id="add-gw-${idx}-${n}" type="number" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:3px;font-size:12px;"></div>
+      <div>bales<br><input id="add-bales-${idx}-${n}" type="number" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:3px;font-size:12px;"></div>
+    </div>`;
+  container.appendChild(row);
+}
+
+async function submitBkgReassign(idx, oldIvNo, pdfNames, pdfPaths) {
+  const token = sessionStorage.getItem('fax_access_token');
+  const bkgNo = document.getElementById(`bkg-reassign-bkg-${idx}`).value.trim().toUpperCase();
+  const ctNo  = document.getElementById(`bkg-reassign-ct-${idx}`).value.trim().toUpperCase();
+  const seal  = document.getElementById(`bkg-reassign-seal-${idx}`).value.trim();
+  const nw    = document.getElementById(`bkg-reassign-nw-${idx}`).value.trim();
+  const tw    = document.getElementById(`bkg-reassign-tw-${idx}`).value.trim();
+  const gw    = document.getElementById(`bkg-reassign-gw-${idx}`).value.trim();
+  const bales = document.getElementById(`bkg-reassign-bales-${idx}`).value.trim();
+  if (!bkgNo || !ctNo) { alert("BKG 번호와 CT 번호는 필수입니다."); return; }
+  if (!token) { alert('認証が必要です'); return; }
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const payload = {
+    generated_at: now.toISOString(), type: 'hannyuhyo_confirmed', status: 'BKG_CHANGED',
+    old_iv_no: oldIvNo, pdf_names: pdfNames||[], pdf_paths: pdfPaths||[],
+    bkg_no: bkgNo, ct_no: ctNo, seal_no: seal||null,
+    n_w: nw?parseFloat(nw):null, t_w: tw?parseFloat(tw):null,
+    g_w: gw?parseFloat(gw):null, bales: bales?parseInt(bales,10):null,
+    confirmed_by: userName||'',
+  };
+  const fileName = `hannyuhyo_confirmed_${ts}.json`;
+  const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
+  try {
+    await _uploadJsonToPath(pathSegs, JSON.stringify(payload, null, 2), token);
+    document.getElementById(`bkg-reassign-form-${idx}`).style.display = 'none';
+    alert(`${oldIvNo} の搬入票\n→ BKG: ${bkgNo} / CT: ${ctNo} で再登録予約しました。\n次回 cron 実行時に反映されます。`);
+  } catch(e) { alert('送信失敗: ' + e.message); }
+}
+
 // ── 初期化 ────────────────────────────────────────────────
 async function init() {
   // OAuth コールバック処理 (Microsoftログイン後 ?code= をトークンに交換)
@@ -419,7 +574,22 @@ function buildCard(key, item) {
 }
 
 // ── 確認完了 ──────────────────────────────────────────────
+// [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] 토글 방식: 確認予定 ↔ 未確認
 function confirmItem(key) {
+  if (state[key].status === '確認予定') {
+    state[key].status = '未確認';
+    const card   = document.getElementById('card-' + key.replace(/\./g, '_'));
+    card.classList.remove('done');
+    card.style.outline = '';
+    card.style.opacity = '';
+    const doneEl = document.getElementById('done-' + key);
+    doneEl.classList.remove('show');
+    const btn = card.querySelector('.btn-confirm');
+    if (btn) { btn.textContent = '✓ 確認完了'; btn.style.background = '#4a90d9'; btn.style.borderColor = '#4a90d9'; }
+    _refreshSendAllBtn();
+    updateProgress();
+    return;
+  }
   const blocks = document.getElementById(key + '_blocks').querySelectorAll('.input-block');
   const inputs = [];
   for (const block of blocks) {
@@ -437,19 +607,20 @@ function confirmItem(key) {
       bales:   (document.getElementById(`${key}_bales_${n}`)?.value  || '').trim(),
     });
   }
-  state[key].status       = "確認完了";
+  state[key].status       = '確認予定';
   state[key].human_input  = inputs;
   state[key].confirmed_by = userName;
   state[key].confirmed_at = new Date().toISOString();
-
-  const card   = document.getElementById("card-" + key.replace(/\./g, "_"));
-  card.classList.add("done");
-  const doneEl = document.getElementById("done-" + key);
+  const card   = document.getElementById('card-' + key.replace(/\./g, '_'));
+  card.classList.add('done');
+  const doneEl = document.getElementById('done-' + key);
   const t      = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-  doneEl.textContent = `✅ ${userName || 'ユーザー'}さんが確認完了しました（${t}）`;
-  doneEl.classList.add("show");
+  doneEl.textContent = `🕐 ${userName || 'ユーザー'}さんが確認予定（${t}）— もう一度押すと取消`;
+  doneEl.classList.add('show');
+  const btn = card.querySelector('.btn-confirm');
+  if (btn) { btn.textContent = '↩ 取消'; btn.style.background = '#e67e22'; btn.style.borderColor = '#e67e22'; }
+  _refreshSendAllBtn();
   updateProgress();
-  if (anyConfirmed()) showSummary();
 }
 
 // ── スキップ ──────────────────────────────────────────────
@@ -484,7 +655,10 @@ function updateProgress() {
 
 function anyConfirmed() {
   // [PR-FAX-TAISHOUGAI-SUBMIT-FIX 2026-06-20]: 対象外のみの場合も送信ボタンを表示
-  return Object.values(state).some(i => i.status === "確認完了" || i.status === "対象外");
+  // [PR-HANNYUHYO-CONFIRM-TOGGLE] 확인예정도 포함
+  return Object.values(state).some(i =>
+    i.status === "確認完了" || i.status === "対象外" || i.status === "確認予定"
+  ) || mdPending.size > 0;
 }
 
 // ── サマリー & ダウンロード ───────────────────────────────
@@ -570,6 +744,7 @@ async function uploadResults() {
 
 // モード C カード レンダリング
 let allModeCItems = [];
+let mdPending = new Set();  // [PR-HANNYUHYO-CONFIRM-TOGGLE] 반입표 확인 예정 idx
 function renderModeCCards() {
     const container = document.getElementById('mode-c-cards');
     if (!container) return;
@@ -888,7 +1063,11 @@ function buildModeDCard(item, idx) {
   const ctRows = cts.length ? cts.map((ct, ci) => `
     <div style="border:1px solid #e8e8e8;border-radius:6px;padding:10px;margin-bottom:8px;background:#fafafa;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-size:12px;font-weight:600;">${ct.ct_no || '(CT 미매핑)'}</div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <div style="font-size:12px;font-weight:600;">${ct.ct_no || '(CT 미매핑)'}</div>
+          ${ct.packer ? `<span style="font-size:10px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:1px 6px;border-radius:3px;">${ct.packer}</span>` : ''}
+          ${ct.plant ? `<span style="font-size:10px;color:#555;background:#f0f0f0;padding:1px 6px;border-radius:3px;">${ct.plant}</span>` : ''}
+        </div>
         <button id="md-ct-confirm-${idx}-${ci}" data-checked="false"
           onclick="toggleCtConfirm(${idx},${ci})"
           disabled
@@ -922,12 +1101,13 @@ function buildModeDCard(item, idx) {
         </div>
       </div>
     </div>`).join('')
-  : '<div style="font-size:11px;color:#aaa;padding:8px;">CT情報なし（containers.json未生成）</div>';
+  : renderAddCtForm(item.iv_no, idx);
 
   return `<div class="card" id="md-card-${idx}">
     <div class="card-header">
       <span class="filename">${item.iv_no}</span>
       ${item.cy_cut ? `<span style="font-size:11px;color:#e07000;font-weight:600;background:#fff3e0;padding:2px 7px;border-radius:4px;">CY: ${item.cy_cut}</span>` : ''}
+      ${item.bkg_no ? `<span style="font-size:11px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:2px 7px;border-radius:4px;">BKG: ${item.bkg_no}</span>` : ''}
       <span class="spacer"></span>
       ${(item.pdf_names || []).map(n =>
         `<a class="btn-pdf" href="https://leenear.sharepoint.com/sites/leenearsite1/Shared%20Documents/%E5%8F%A4%E7%B4%99/-.%20%E5%8F%A4%E7%B4%99%E6%9B%B8%E9%A1%9E/%E2%96%B2%20LEENAI%20%E9%80%9A%E9%96%A2%E4%BD%9C%E6%A5%AD%E4%B8%AD/PHOTO/${encodeURIComponent(item.iv_no)}/%E6%90%AC%E5%85%A5%E7%A5%A8/${encodeURIComponent(n)}" target="_blank">📄 ${n}</a>`
@@ -936,7 +1116,29 @@ function buildModeDCard(item, idx) {
     </div>
     <div class="card-body">
       ${ctRows}
+      <div id="add-ct-list-${idx}"></div>
+      <button onclick="addCtRow(${idx},'${item.iv_no}')"
+        style="font-size:12px;padding:4px 10px;border:1px solid #aaa;border-radius:4px;cursor:pointer;margin:4px 0;">
+        ＋ CT追加
+      </button>
+      <div id="bkg-reassign-form-${idx}" style="display:none;margin-bottom:8px;padding:10px;background:#fff8e1;border:1px solid #f9a825;border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#e65100;">⚠ 올바른 BKG 정보를 입력하세요</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+          <label style="font-size:11px;color:#555;">BKG 번호<input id="bkg-reassign-bkg-${idx}" type="text" placeholder="예: JJCOSSJNA66A13" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #f9a825;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">CT 번호<input id="bkg-reassign-ct-${idx}" type="text" placeholder="예: TWCU8130281" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #f9a825;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">SEAL 번호<input id="bkg-reassign-seal-${idx}" type="text" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">N/W (kg)<input id="bkg-reassign-nw-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">T/W (kg)<input id="bkg-reassign-tw-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">G/W (kg)<input id="bkg-reassign-gw-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">bales<input id="bkg-reassign-bales-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
+        </div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          <button onclick="document.getElementById('bkg-reassign-form-${idx}').style.display='none'" style="padding:5px 12px;background:#eee;border:none;border-radius:4px;font-size:12px;cursor:pointer;">キャンセル</button>
+          <button onclick="submitBkgReassign(${idx},'${item.iv_no}',${JSON.stringify(item.pdf_names)},${JSON.stringify(item.pdf_paths)})" style="padding:5px 14px;background:#e65100;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">移動実行</button>
+        </div>
+      </div>
       <div class="card-footer">
+        <button onclick="document.getElementById('bkg-reassign-form-${idx}').style.display='block'" style="padding:6px 14px;background:#fff8e1;color:#e65100;border:1px solid #f9a825;border-radius:6px;font-size:13px;cursor:pointer;margin-right:6px;">BKG 変更</button>
         <button class="btn-skip" onclick="skipMdCard(${idx})">スキップ</button>
         <button class="btn-unmatch" onclick="markUnmatchedMd(${idx})">対象外</button>
         <button class="btn-confirm" onclick="confirmHannyuhyoCard(${idx})">確認完了</button>
@@ -1023,14 +1225,25 @@ async function markUnmatchedMd(idx) {
   }
 }
 
-async function confirmHannyuhyoCard(idx) {
-  const token = sessionStorage.getItem('fax_access_token');
-  const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
+// [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] 토글 방식
+function confirmHannyuhyoCard(idx) {
+  const item = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
   if (!item) return;
+  const card   = document.getElementById('md-card-'  + idx);
+  const doneEl = document.getElementById('md-done-' + idx);
+  const btn    = card?.querySelector('.btn-confirm');
+  if (mdPending.has(idx)) {
+    mdPending.delete(idx);
+    card?.classList.remove('done');
+    doneEl?.classList.remove('show');
+    if (btn) { btn.textContent = '確認完了'; btn.style.background = ''; btn.style.borderColor = ''; }
+    _refreshSendAllBtn();
+    return;
+  }
   const cts = item.cts || [];
   const confirmedCts = cts.map((ct, ci) => {
-    const btn = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
-    if (btn?.dataset.checked !== 'true') return null;
+    const b = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+    if (b?.dataset.checked !== 'true') return null;
     return {
       ct_no:         ct.ct_no,
       seal_from_pdf: document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || null,
@@ -1041,33 +1254,26 @@ async function confirmHannyuhyoCard(idx) {
       confirmed_at: new Date().toISOString(),
     };
   }).filter(Boolean);
-  if (!confirmedCts.length) {
-    alert('CT確認ボタンを押してから送信してください');
-    return;
+  const addedRows = _addCtRows[idx] || [];
+  for (let n = 0; n < addedRows.length; n++) {
+    const ct_no = (document.getElementById(`add-ct-no-${idx}-${n}`)?.value || '').trim().toUpperCase();
+    if (!ct_no) continue;
+    confirmedCts.push({
+      ct_no,
+      seal_from_pdf: document.getElementById(`add-seal-${idx}-${n}`)?.value || null,
+      n_w:   parseFloat(document.getElementById(`add-nw-${idx}-${n}`)?.value)  || null,
+      t_w:   parseFloat(document.getElementById(`add-tw-${idx}-${n}`)?.value)  || null,
+      g_w:   parseFloat(document.getElementById(`add-gw-${idx}-${n}`)?.value)  || null,
+      bales: parseInt(document.getElementById(`add-bales-${idx}-${n}`)?.value) || null,
+    });
   }
-
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  const payload = {
-    generated_at:  now.toISOString(),
-    type:          'hannyuhyo_confirmed',
-    iv_no:         item.iv_no,
-    pdf_names:     item.pdf_names || [],
-    pdf_paths:     item.pdf_paths || [],
-    confirmed_by:  userName || '',
-    confirmed_cts: confirmedCts,
-  };
-  const fileName = `hannyuhyo_confirmed_${ts}.json`;
-  const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
-  if (!token) { alert('認証が必要です'); return; }
-  try {
-    await _uploadJsonToPath(pathSegs, payload, token);
-    document.getElementById('md-done-' + idx).classList.add('show');
-    document.getElementById('md-card-' + idx).classList.add('done');
-  } catch(e) {
-    alert('送信失敗: ' + e.message);
-  }
+  if (!confirmedCts.length) { alert('CT確認ボタンを押してから送信してください'); return; }
+  mdPending.add(idx);
+  card?.classList.add('done');
+  const t = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+  if (doneEl) { doneEl.textContent = `🕐 確認予定（${t}）— もう一度押すと取消`; doneEl.classList.add('show'); }
+  if (btn) { btn.textContent = '↩ 取消'; btn.style.background = '#e67e22'; btn.style.borderColor = '#e67e22'; }
+  _refreshSendAllBtn();
 }
 </script>
 </body>
