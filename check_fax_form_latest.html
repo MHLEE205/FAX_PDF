@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.5</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.6</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -512,7 +512,8 @@ function updateProgress() {
 }
 
 function anyConfirmed() {
-  return Object.values(state).some(i => i.status === "確認完了");
+  // [PR-FAX-TAISHOUGAI-SUBMIT-FIX 2026-06-20]: 対象外のみの場合も送信ボタンを表示
+  return Object.values(state).some(i => i.status === "確認完了" || i.status === "対象外");
 }
 
 // ── サマリー & ダウンロード ───────────────────────────────
