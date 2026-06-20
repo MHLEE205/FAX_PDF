@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.8</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v1.9</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -118,6 +118,11 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
     <div class="meta" id="page-meta"></div>
     <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
       <span id="user-display" style="font-size:12px; color:#555;"></span>
+      <button id="btn-send-all" onclick="sendAll()"
+        style="font-size:11px; padding:3px 10px; border:1px solid #27ae60; border-radius:4px;
+               background:#27ae60; color:#fff; cursor:pointer; display:none; margin-right:4px;">
+        📤 전체 송신
+      </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
   </div>
@@ -314,6 +319,97 @@ function removeBlock(key, n) {
   if (el) el.remove();
 }
 
+// [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] ────────────────────────────
+function _refreshSendAllBtn() {
+  const hasFax = Object.values(state).some(i => i.status === '確認予定' || i.status === '対象外');
+  const hasMd  = mdPending.size > 0;
+  const btn = document.getElementById('btn-send-all');
+  if (!btn) return;
+  if (hasFax || hasMd) {
+    btn.style.display = 'inline';
+    const n = Object.values(state).filter(i => i.status === '確認予定' || i.status === '対象外').length + mdPending.size;
+    btn.textContent = `📤 전체 송신 (${n}건)`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+async function _doConfirmHannyuhyoCard(idx) {
+  const token = sessionStorage.getItem('fax_access_token');
+  const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
+  if (!item || !token) return;
+  const cts = item.cts || [];
+  const confirmedCts = cts.map((ct, ci) => {
+    const b = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+    if (b?.dataset.checked !== 'true') return null;
+    return {
+      ct_no:         ct.ct_no,
+      seal_from_pdf: document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || null,
+      n_w:    parseFloat(document.getElementById(`md-nw-${idx}-${ci}`)?.value)   || null,
+      t_w:    parseFloat(document.getElementById(`md-tw-d-${idx}-${ci}`)?.value) || null,
+      g_w:    parseFloat(document.getElementById(`md-gw-${idx}-${ci}`)?.value)   || null,
+      bales:  parseInt(document.getElementById(`md-bales-${idx}-${ci}`)?.value)  || null,
+      confirmed_at: new Date().toISOString(),
+    };
+  }).filter(Boolean);
+  const addedRows = _addCtRows[idx] || [];
+  for (let n = 0; n < addedRows.length; n++) {
+    const ct_no = (document.getElementById(`add-ct-no-${idx}-${n}`)?.value || '').trim().toUpperCase();
+    if (!ct_no) continue;
+    confirmedCts.push({
+      ct_no,
+      seal_from_pdf: document.getElementById(`add-seal-${idx}-${n}`)?.value || null,
+      n_w:   parseFloat(document.getElementById(`add-nw-${idx}-${n}`)?.value)    || null,
+      t_w:   parseFloat(document.getElementById(`add-tw-${idx}-${n}`)?.value)    || null,
+      g_w:   parseFloat(document.getElementById(`add-gw-${idx}-${n}`)?.value)    || null,
+      bales: parseInt(document.getElementById(`add-bales-${idx}-${n}`)?.value)   || null,
+    });
+  }
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const payload = {
+    generated_at:  now.toISOString(),
+    type:          'hannyuhyo_confirmed',
+    iv_no:         item.iv_no,
+    pdf_names:     item.pdf_names || [],
+    pdf_paths:     item.pdf_paths || [],
+    confirmed_by:  userName || '',
+    confirmed_cts: confirmedCts,
+  };
+  const fileName = `hannyuhyo_confirmed_${ts}.json`;
+  const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
+  await _uploadJsonToPath(pathSegs, payload, token);
+  document.getElementById('md-done-' + idx).textContent = '✅ 送信済み';
+  document.getElementById('md-card-' + idx).classList.add('done');
+}
+
+async function sendAll() {
+  const btn = document.getElementById('btn-send-all');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 送信中...'; }
+  try {
+    // FAX 탭: 確認予定 → 確認完了 후 uploadResults
+    const hasFax = Object.values(state).some(i => i.status === '確認予定' || i.status === '対象外');
+    if (hasFax) {
+      Object.values(state).forEach(i => {
+        if (i.status === '確認予定') i.status = '確認完了';
+      });
+      await uploadResults();
+    }
+    // 반입표 탭: 확인 예정 idx 순서대로 송신
+    const mdArr = [...mdPending].sort((a, b) => a - b);
+    for (const idx of mdArr) {
+      await _doConfirmHannyuhyoCard(idx);
+      mdPending.delete(idx);
+    }
+    if (btn) { btn.textContent = '✅ 送信完了'; btn.style.background = '#155724'; btn.style.borderColor = '#155724'; }
+  } catch(e) {
+    alert('送信失敗: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '📤 전체 송신'; }
+  }
+}
+// ── END PR-HANNYUHYO-CONFIRM-TOGGLE ──────────────────────────────
+
 // ── 初期化 ────────────────────────────────────────────────
 async function init() {
   // OAuth コールバック処理 (Microsoftログイン後 ?code= をトークンに交換)
@@ -419,7 +515,24 @@ function buildCard(key, item) {
 }
 
 // ── 確認完了 ──────────────────────────────────────────────
+// [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] 토글 방식: 確認予定 ↔ 未確認
 function confirmItem(key) {
+  if (state[key].status === '確認予定') {
+    // 취소
+    state[key].status = '未確認';
+    const card   = document.getElementById('card-' + key.replace(/\./g, '_'));
+    card.classList.remove('done');
+    card.style.outline = '';
+    card.style.opacity = '';
+    const doneEl = document.getElementById('done-' + key);
+    doneEl.classList.remove('show');
+    const btn = card.querySelector('.btn-confirm');
+    if (btn) { btn.textContent = '✓ 確認完了'; btn.style.background = '#4a90d9'; btn.style.borderColor = '#4a90d9'; }
+    _refreshSendAllBtn();
+    updateProgress();
+    return;
+  }
+  // 확인 예정으로 변경
   const blocks = document.getElementById(key + '_blocks').querySelectorAll('.input-block');
   const inputs = [];
   for (const block of blocks) {
@@ -437,19 +550,21 @@ function confirmItem(key) {
       bales:   (document.getElementById(`${key}_bales_${n}`)?.value  || '').trim(),
     });
   }
-  state[key].status       = "確認完了";
+  state[key].status       = '確認予定';
   state[key].human_input  = inputs;
   state[key].confirmed_by = userName;
   state[key].confirmed_at = new Date().toISOString();
 
-  const card   = document.getElementById("card-" + key.replace(/\./g, "_"));
-  card.classList.add("done");
-  const doneEl = document.getElementById("done-" + key);
+  const card   = document.getElementById('card-' + key.replace(/\./g, '_'));
+  card.classList.add('done');
+  const doneEl = document.getElementById('done-' + key);
   const t      = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-  doneEl.textContent = `✅ ${userName || 'ユーザー'}さんが確認完了しました（${t}）`;
-  doneEl.classList.add("show");
+  doneEl.textContent = `🕐 ${userName || 'ユーザー'}さんが確認予定（${t}）— もう一度押すと取消`;
+  doneEl.classList.add('show');
+  const btn = card.querySelector('.btn-confirm');
+  if (btn) { btn.textContent = '↩ 取消'; btn.style.background = '#e67e22'; btn.style.borderColor = '#e67e22'; }
+  _refreshSendAllBtn();
   updateProgress();
-  if (anyConfirmed()) showSummary();
 }
 
 // ── スキップ ──────────────────────────────────────────────
@@ -484,7 +599,10 @@ function updateProgress() {
 
 function anyConfirmed() {
   // [PR-FAX-TAISHOUGAI-SUBMIT-FIX 2026-06-20]: 対象外のみの場合も送信ボタンを表示
-  return Object.values(state).some(i => i.status === "確認完了" || i.status === "対象外");
+  // [PR-HANNYUHYO-CONFIRM-TOGGLE] 확인예정도 포함
+  return Object.values(state).some(i =>
+    i.status === "確認完了" || i.status === "対象外" || i.status === "確認予定"
+  ) || mdPending.size > 0;
 }
 
 // ── サマリー & ダウンロード ───────────────────────────────
@@ -570,6 +688,7 @@ async function uploadResults() {
 
 // モード C カード レンダリング
 let allModeCItems = [];
+let mdPending = new Set();  // [PR-HANNYUHYO-CONFIRM-TOGGLE] 반입표 확인 예정 idx
 function renderModeCCards() {
     const container = document.getElementById('mode-c-cards');
     if (!container) return;
@@ -885,15 +1004,10 @@ function renderModeD() {
 
 // [PR-HANNYUHYO-PENDING-INJECT 2026-06-20] CT 추가 기능
 function renderAddCtForm(iv_no, idx) {
-  return `
-    <div style="padding:8px;">
-      <div style="font-size:11px;color:#aaa;margin-bottom:8px;">CT情報なし — CT番号を入力して反入票情報を登録できます</div>
-      <div id="add-ct-list-${idx}"></div>
-      <button onclick="addCtRow(${idx},'${iv_no}')"
-        style="font-size:12px;padding:4px 10px;border:1px solid #aaa;border-radius:4px;cursor:pointer;margin-top:4px;">
-        ＋ CT追加
-      </button>
-    </div>`;
+  // [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] CT 추가 버튼은 card-body 고정 위치에만 두고 여기서는 텍스트만
+  return `<div style="padding:4px 0 2px;">
+    <div style="font-size:11px;color:#aaa;">CT情報なし — CT番号を入力して反入票情報を登録できます</div>
+  </div>`;
 }
 
 let _addCtRows = {};
@@ -1172,14 +1286,29 @@ async function markUnmatchedMd(idx) {
   }
 }
 
-async function confirmHannyuhyoCard(idx) {
-  const token = sessionStorage.getItem('fax_access_token');
-  const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
+// [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] 토글 방식
+function confirmHannyuhyoCard(idx) {
+  const item = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
   if (!item) return;
+  const card   = document.getElementById('md-card-'  + idx);
+  const doneEl = document.getElementById('md-done-' + idx);
+  const btn    = card?.querySelector('.btn-confirm');
+
+  if (mdPending.has(idx)) {
+    // 취소
+    mdPending.delete(idx);
+    card?.classList.remove('done');
+    doneEl?.classList.remove('show');
+    if (btn) { btn.textContent = '確認完了'; btn.style.background = ''; btn.style.borderColor = ''; }
+    _refreshSendAllBtn();
+    return;
+  }
+
+  // 입력값 검사
   const cts = item.cts || [];
   const confirmedCts = cts.map((ct, ci) => {
-    const btn = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
-    if (btn?.dataset.checked !== 'true') return null;
+    const b = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
+    if (b?.dataset.checked !== 'true') return null;
     return {
       ct_no:         ct.ct_no,
       seal_from_pdf: document.getElementById(`md-seal-d-${idx}-${ci}`)?.value || null,
@@ -1190,7 +1319,6 @@ async function confirmHannyuhyoCard(idx) {
       confirmed_at: new Date().toISOString(),
     };
   }).filter(Boolean);
-  // [PR-HANNYUHYO-PENDING-INJECT 2026-06-20] 추가 CT 수집
   const addedRows = _addCtRows[idx] || [];
   for (let n = 0; n < addedRows.length; n++) {
     const ct_no = (document.getElementById(`add-ct-no-${idx}-${n}`)?.value || '').trim().toUpperCase();
@@ -1204,34 +1332,15 @@ async function confirmHannyuhyoCard(idx) {
       bales: parseInt(document.getElementById(`add-bales-${idx}-${n}`)?.value)   || null,
     });
   }
-  // ── END PR-HANNYUHYO-PENDING-INJECT (추가 CT) ──
-  if (!confirmedCts.length) {
-    alert('CT確認ボタンを押してから送信してください');
-    return;
-  }
+  if (!confirmedCts.length) { alert('CT確認ボタンを押してから送信してください'); return; }
 
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  const payload = {
-    generated_at:  now.toISOString(),
-    type:          'hannyuhyo_confirmed',
-    iv_no:         item.iv_no,
-    pdf_names:     item.pdf_names || [],
-    pdf_paths:     item.pdf_paths || [],
-    confirmed_by:  userName || '',
-    confirmed_cts: confirmedCts,
-  };
-  const fileName = `hannyuhyo_confirmed_${ts}.json`;
-  const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED', fileName];
-  if (!token) { alert('認証が必要です'); return; }
-  try {
-    await _uploadJsonToPath(pathSegs, payload, token);
-    document.getElementById('md-done-' + idx).classList.add('show');
-    document.getElementById('md-card-' + idx).classList.add('done');
-  } catch(e) {
-    alert('送信失敗: ' + e.message);
-  }
+  // 확인 예정 상태로 변경
+  mdPending.add(idx);
+  card?.classList.add('done');
+  const t = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+  if (doneEl) { doneEl.textContent = `🕐 確認予定（${t}）— もう一度押すと取消`; doneEl.classList.add('show'); }
+  if (btn) { btn.textContent = '↩ 取消'; btn.style.background = '#e67e22'; btn.style.borderColor = '#e67e22'; }
+  _refreshSendAllBtn();
 }
 </script>
 </body>
