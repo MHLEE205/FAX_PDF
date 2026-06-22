@@ -382,8 +382,10 @@ async function _doConfirmHannyuhyoCard(idx) {
   document.getElementById('md-card-'+idx).classList.add('done');
 }
 async function sendAll() {
-  const btn = document.getElementById('btn-send-all');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ 送信中...'; }
+  const btn  = document.getElementById('btn-send-all');
+  const btnD = document.getElementById('btn-send-all-d');
+  if (btn)  { btn.disabled  = true; btn.textContent  = '⏳ 送信中...'; }
+  if (btnD) { btnD.disabled = true; btnD.textContent = '⏳ 送信中...'; }
   try {
     if (Object.values(state).some(i => i.status==='確認予定'||i.status==='対象外')) {
       Object.values(state).forEach(i => { if (i.status==='確認予定') i.status='確認完了'; });
@@ -396,8 +398,13 @@ async function sendAll() {
     for (const key of [...recheckPending]) {
       await _doRecheckConfirm(parseInt(key)); recheckPending.delete(key);
     }
-    if (btn) { btn.textContent='✅ 送信完了'; btn.style.background='#155724'; btn.style.borderColor='#155724'; }
-  } catch(e) { alert('送信失敗: '+e.message); if(btn){btn.disabled=false;btn.textContent='📤 一括送信';} }
+    if (btn)  { btn.textContent='✅ 送信完了';  btn.style.background='#155724';  btn.style.borderColor='#155724'; }
+    if (btnD) { btnD.textContent='✅ 送信完了'; btnD.style.background='#155724'; btnD.style.borderColor='#155724'; }
+  } catch(e) {
+    alert('送信失敗: '+e.message);
+    if (btn)  { btn.disabled=false;  btn.textContent='📤 一括送信'; }
+    if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; }
+  }
 }
 function renderAddCtForm(iv_no, idx) {
   return `<div style="padding:4px 0 2px;"><div style="font-size:11px;color:#aaa;">CT情報なし — CT番号を入力して反入票情報を登録できます</div></div>`;
