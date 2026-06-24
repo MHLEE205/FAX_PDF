@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v2.6</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v2.7</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:14</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:22</div>
   </div>
 </div>
 
@@ -385,7 +385,7 @@ function _refreshSendAllBtn() {
 async function _doConfirmHannyuhyoCard(idx) {
   const token = sessionStorage.getItem('fax_access_token');
   const item  = (Array.isArray(PENDING_HANNYUHYO_DATA) ? PENDING_HANNYUHYO_DATA : [])[idx];
-  if (!item || !token) return;
+  if (!item || !token) throw new Error('送信失敗: 認証切れまたはデータ不整合 (idx=' + idx + ')');
   const cts = item.cts || [];
   const confirmedCts = cts.map((ct, ci) => {
     const b = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
@@ -413,6 +413,7 @@ async function _doConfirmHannyuhyoCard(idx) {
       g_w: parseFloat(document.getElementById(`add-gw-${idx}-${n}`)?.value)||null,
       bales: parseInt(document.getElementById(`add-bales-${idx}-${n}`)?.value)||null });
   }
+  if (!confirmedCts.length) throw new Error('確認済みCTなし (idx=' + idx + ')');
   const now = new Date(); const pad = n => String(n).padStart(2,'0');
   const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const payload = { generated_at: now.toISOString(), type: 'hannyuhyo_confirmed',
@@ -1137,7 +1138,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:14</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:22</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
