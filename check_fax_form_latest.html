@@ -130,7 +130,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:18</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:20</div>
   </div>
 </div>
 
@@ -265,6 +265,25 @@ function updatePlantField(key, n) {
   }
 }
 
+// [PR-CT-PACKER-MANUAL-ASSIGN 2026-06-24]: mode-d packer null CT용 plant 갱신
+function updateMdPlantField(idx, ci) {
+  const packerEl = document.getElementById(`md-packer-${idx}-${ci}`);
+  const fieldDiv = document.getElementById(`md-plant-field-${idx}-${ci}`);
+  if (!packerEl || !fieldDiv) return;
+  const curPlant = (fieldDiv.querySelector('select,input')?.value || '').trim();
+  const packer   = packerEl.value.split('（')[0];
+  const plants   = PACKER_PLANT_MAP[packer] || [];
+  if (plants.length > 0) {
+    const opts = ['', ...plants].map(p => {
+      const sel = p === curPlant ? ' selected' : '';
+      return `<option value="${p}"${sel}>${p || '-'}</option>`;
+    }).join('');
+    fieldDiv.innerHTML = `<select id="md-plant-${idx}-${ci}" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">${opts}</select>`;
+  } else {
+    fieldDiv.innerHTML = `<input id="md-plant-${idx}-${ci}" value="${curPlant}" placeholder="예: ナガイ(みよし)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">`;
+  }
+}
+
 // ── PACKER マスター ───────────────────────────────────────
 const PACKERS = ["", "CHUBU", "DAICHU", "DAIWA", "ECO", "ECOSTYLE", "FUJI", "FUJI_SHIGYO", "FUMIMOTO", "GUMMA", "HANWA", "HARIMA", "HYOGO", "IKUMINE", "ISHIKAWA", "ISHIZAKA", "JOP", "KAIYO", "KAMISHIGEN", "KANEKO", "KANEKO_SHOJI", "KANKUMI", "KAWAMURA", "KAWASUZU", "KINOSHITA", "KOBE", "KODUKA", "KOKUSAI", "KUMAGAYA", "KUNIYOSHI", "KYOEKI", "KYOKUSHIN", "KYOUWA", "KYUSHU", "MARUYASU", "MATEC", "MATERIO", "MEIHO_DISPATCH", "MEIWA", "MIYAZAKI", "MORITA", "NAGAI", "OKINAWA", "OKUBO", "OOMOTO", "SAKAUE", "SANKO", "SEIU", "SHIZAI", "SK_TRADING", "SUNWASPA", "TERAMATSU", "TOKYO", "TOKYO_N", "TOUCHI", "TPC", "TSUBO", "TSURUMI", "UBUKATA", "YAMAHATSU", "その他"];
 
@@ -360,12 +379,18 @@ async function _doConfirmHannyuhyoCard(idx) {
   const confirmedCts = cts.map((ct, ci) => {
     const b = document.getElementById(`md-ct-confirm-${idx}-${ci}`);
     if (b?.dataset.checked !== 'true') return null;
+    const _packerVal = ct.packer == null
+      ? (document.getElementById(`md-packer-${idx}-${ci}`)?.value || '')
+      : (ct.packer || '');
+    const _plantVal  = ct.packer == null
+      ? (document.getElementById(`md-plant-${idx}-${ci}`)?.value  || '')
+      : (ct.plant  || '');
     return { ct_no: ct.ct_no, seal_from_pdf: document.getElementById(`md-seal-d-${idx}-${ci}`)?.value||null,
       n_w: parseFloat(document.getElementById(`md-nw-${idx}-${ci}`)?.value)||null,
       t_w: parseFloat(document.getElementById(`md-tw-d-${idx}-${ci}`)?.value)||null,
       g_w: parseFloat(document.getElementById(`md-gw-${idx}-${ci}`)?.value)||null,
       bales: parseInt(document.getElementById(`md-bales-${idx}-${ci}`)?.value)||null,
-      confirmed_at: new Date().toISOString() };
+      packer: _packerVal, plant: _plantVal, confirmed_at: new Date().toISOString() };
   }).filter(Boolean);
   const addedRows = _addCtRows[idx] || [];
   for (let n = 0; n < addedRows.length; n++) {
@@ -1060,7 +1085,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:18</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:20</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1246,6 +1271,25 @@ function buildModeDCard(item, idx) {
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;width:100%;">
         </div>
       </div>
+      ${ct.packer == null ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;
+                  background:#fff3cd;padding:6px 8px;border-radius:4px;border:1px solid #ffc107;">
+        <div>
+          <label style="font-size:11px;color:#856404;">⚠ PACKER ★ (수동 지정)</label>
+          <select id="md-packer-${idx}-${ci}"
+                  onchange="updateMdPlantField(${idx},${ci})"
+                  style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ffc107;border-radius:4px;">
+            ${PACKERS.map(p=>`<option value="${p}">${p||'-- 선택 --'}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#856404;">PLANT</label>
+          <div id="md-plant-field-${idx}-${ci}">
+            <input id="md-plant-${idx}-${ci}" placeholder="예: ナガイ(みよし)"
+                   style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">
+          </div>
+        </div>
+      </div>` : ''}
     </div>`).join('')
   : renderAddCtForm(item.iv_no, idx);
 
