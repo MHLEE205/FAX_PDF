@@ -123,6 +123,11 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
                background:#27ae60; color:#fff; cursor:pointer; display:none; margin-right:4px;">
         📤 一括送信
       </button>
+      <button id="btn-jikkyou-fax" onclick="_triggerJikkyouUpdate('btn-jikkyou-fax')"
+        style="font-size:11px; padding:3px 10px; border:1px solid #6a1b9a; border-radius:4px;
+               background:#6a1b9a; color:#fff; cursor:pointer; margin-right:4px;">
+        📊 実況表 UPDATE
+      </button>
       <button id="btn-update-fax" onclick="_triggerNotifyUpdate('btn-update-fax')"
         style="font-size:11px; padding:3px 10px; border:1px solid #1976d2; border-radius:4px;
                background:#1976d2; color:#fff; cursor:pointer; margin-right:4px;">
@@ -130,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:35</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:45</div>
   </div>
 </div>
 
@@ -505,6 +510,27 @@ async function _triggerNotifyUpdate(buttonId) {
   } catch(e) {
     alert('送信失敗: ' + e.message);
     if (btn) { btn.disabled = false; btn.textContent = '🔄 UPDATE'; }
+  }
+}
+
+// [PR-JIKKYOU-UPDATE-BTN] 実況表 수동 갱신 트리거
+async function _triggerJikkyouUpdate(buttonId) {
+  const token = sessionStorage.getItem('fax_access_token');
+  if (!token) { alert('認証が必要です'); return; }
+  const btn = document.getElementById(buttonId);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 実況表 生成中...'; }
+  try {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const ts  = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const payload = { generated_at: now.toISOString(), type: 'jikkyou_trigger' };
+    const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED',`jikkyou_trigger_${ts}.json`];
+    await _uploadJsonToPath(pathSegs, JSON.stringify(payload, null, 2), token);
+    if (btn) { btn.textContent = '✅ 送信済 — 約60秒で反映'; }
+    setTimeout(() => { if (btn) { btn.disabled = false; btn.textContent = '📊 実況表 UPDATE'; } }, 90000);
+  } catch(e) {
+    alert('送信失敗: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '📊 実況表 UPDATE'; }
   }
 }
 
@@ -1085,6 +1111,11 @@ init();
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
       <div style="display:flex; align-items:center; gap:8px;">
         <div class="meta" id="mode-d-meta"></div>
+        <button id="btn-jikkyou-d" onclick="_triggerJikkyouUpdate('btn-jikkyou-d')"
+          style="font-size:11px; padding:3px 10px; border:1px solid #6a1b9a; border-radius:4px;
+                 background:#6a1b9a; color:#fff; cursor:pointer; margin-right:4px;">
+          📊 実況表 UPDATE
+        </button>
         <button id="btn-update-d" onclick="_triggerNotifyUpdate('btn-update-d')"
           style="font-size:11px; padding:3px 10px; border:1px solid #1976d2; border-radius:4px;
                  background:#1976d2; color:#fff; cursor:pointer; margin-right:4px;">
@@ -1096,7 +1127,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:35</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:45</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
