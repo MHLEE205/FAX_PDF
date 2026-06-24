@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:13</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:14</div>
   </div>
 </div>
 
@@ -149,7 +149,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <!-- [PR-UNRECEIVED-ALERT 2026-06-24]: 미회수 CT 경고 섹션 -->
 <div id="unreceived-alert-section" style="margin-top:20px;display:none;">
-  <div style="font-size:14px;font-weight:700;color:#c62828;margin-bottom:8px;">📬 未回収CT — 사진 도착했지만 처리 미완료</div>
+  <div style="font-size:14px;font-weight:700;color:#c62828;margin-bottom:8px;">📬 未回収CT — 写真到着済・処理未完了</div>
   <div id="unreceived-alert-cards"></div>
 </div>
 
@@ -1137,7 +1137,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:13</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 20:14</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1185,7 +1185,7 @@ function renderUnreceivedAlert() {
           <span style="color:#c62828;font-weight:600;">⚠</span>
           <span style="font-family:monospace;">${ct.ct_no}</span>
           ${ct.packer ? `<span style="color:#555;background:#f0f0f0;padding:1px 5px;border-radius:3px;">${ct.packer}</span>` : ''}
-          <span style="color:#888;">사진 ${ct.photos}장 도착 → containers.json 미등록</span>
+          <span style="color:#888;">写真 ${ct.photos}枚 到着済 → containers.json 未登録</span>
         </div>`).join('')}
     </div>`).join('');
 }
