@@ -130,7 +130,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:03</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:08</div>
   </div>
 </div>
 
@@ -1046,17 +1046,22 @@ init();
 <div id="mode-d-area" style="display:none; margin-top:16px;">
   <div class="page-header">
     <h1>搬入票 確認 <span style='font-size:13px;color:#888;font-weight:normal;'>모드 D</span></h1>
-    <div class="meta" id="mode-d-meta"></div>
-    <button id="btn-update-d" onclick="_triggerNotifyUpdate('btn-update-d')"
-      style="font-size:11px; padding:3px 10px; border:1px solid #1976d2; border-radius:4px;
-             background:#1976d2; color:#fff; cursor:pointer; margin-right:4px;">
-      🔄 UPDATE
-    </button>
-    <button id="btn-send-all-d" onclick="sendAll()"
-      style="font-size:11px; padding:3px 10px; border:1px solid #27ae60; border-radius:4px;
-             background:#27ae60; color:#fff; cursor:pointer; display:none; margin-right:4px;">
-      📤 一括送信
-    </button>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="meta" id="mode-d-meta"></div>
+        <button id="btn-update-d" onclick="_triggerNotifyUpdate('btn-update-d')"
+          style="font-size:11px; padding:3px 10px; border:1px solid #1976d2; border-radius:4px;
+                 background:#1976d2; color:#fff; cursor:pointer; margin-right:4px;">
+          🔄 UPDATE
+        </button>
+        <button id="btn-send-all-d" onclick="sendAll()"
+          style="font-size:11px; padding:3px 10px; border:1px solid #27ae60; border-radius:4px;
+                 background:#27ae60; color:#fff; cursor:pointer; display:none; margin-right:4px;">
+          📤 一括送信
+        </button>
+      </div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-24 10:08</div>
+    </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
   <!-- [PR-RECHECK-CT-CONFIRM v2] 재확인 CT 섹션 -->
