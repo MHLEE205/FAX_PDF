@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-25 16:39</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-25 16:41</div>
   </div>
 </div>
 
@@ -1156,7 +1156,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-25 16:39</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-25 16:41</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1343,16 +1343,14 @@ function buildModeDCard(item, idx) {
       ${ct.hannyuhyo_pdf_name
         ? `<div style="margin-bottom:4px;"><a class="btn-pdf" href="https://leenear.sharepoint.com/sites/leenearsite1/Shared%20Documents/%E5%8F%A4%E7%B4%99/-.%20%E5%8F%A4%E7%B4%99%E6%9B%B8%E9%A1%9E/%E2%96%B2%20LEENAI%20%E9%80%9A%E9%96%A2%E4%BD%9C%E6%A5%AD%E4%B8%AD/PHOTO/${encodeURIComponent(item.iv_no)}/%E6%90%AC%E5%85%A5%E7%A5%A8/${encodeURIComponent(ct.hannyuhyo_pdf_name)}" target="_blank">📄 ${ct.hannyuhyo_pdf_name}</a></div>`
         : '<div style="margin-bottom:4px;font-size:11px;color:#aaa;">반입표 없음</div>'}
-      ${ct.packer === 'FUJI' ? (() => {
-          const _kname = ct.keisho_photo_name
-            || (ct.keisho_photos && ct.keisho_photos.length > 0
-                ? ct.keisho_photos[0].split('\\').pop() : '');
-          if (!_kname) return '';
-          const ctFolder = encodeURIComponent(ct.ct_no);
-          const ivFolder = encodeURIComponent(item.iv_no);
-          const fileEnc  = encodeURIComponent(_kname);
-          return `<div style="margin-bottom:4px;"><a class="btn-pdf" href="${SHAREPOINT_BASE}/${ivFolder}/${ctFolder}/${fileEnc}" target="_blank">🖼 計量書</a></div>`;
-        })() : ''}
+      ${(ct.packer === 'FUJI' && ct.keisho_photo_name)
+        ? (() => {
+            const ctFolder = encodeURIComponent(ct.ct_no);
+            const ivFolder = encodeURIComponent(item.iv_no);
+            const fileEnc  = encodeURIComponent(ct.keisho_photo_name);
+            return `<div style="margin-bottom:4px;"><a class="btn-pdf" href="${SHAREPOINT_BASE}/${ivFolder}/${ctFolder}/${fileEnc}" target="_blank">🖼 計量書</a></div>`;
+          })()
+        : ''}
       <div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:4px;">
         <div class="field" style="flex:1.5;min-width:90px;"><label>SEAL 搬入票</label>
           <input id="md-seal-d-${idx}-${ci}" type="text" value="${ct.seal_from_pdf||''}"
