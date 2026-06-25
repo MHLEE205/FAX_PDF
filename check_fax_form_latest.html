@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v2.9</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v3.0</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 08:51</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 08:54</div>
   </div>
 </div>
 
@@ -227,6 +227,7 @@ async function handleCallback() {
     if (!resp.ok) { console.error('token exchange failed', await resp.text()); return false; }
     const data = await resp.json();
     sessionStorage.setItem('fax_access_token', data.access_token);
+    if (data.refresh_token) sessionStorage.setItem('fax_refresh_token', data.refresh_token); // [TOKEN-REFRESH-FIX]
     sessionStorage.removeItem('pkce_verifier');
     sessionStorage.removeItem('oauth_state');
     history.replaceState({}, '', window.location.pathname);
@@ -519,8 +520,9 @@ function _lockUpdateBtns() {
 
 // [PR-UPDATE-BUTTON] UPDATE ボタン → notify_trigger → watcher → notify.py → HTML再生成
 async function _triggerNotifyUpdate(buttonId) {
-  const token = sessionStorage.getItem('fax_access_token');
-  if (!token) { alert('認証が必要です'); return; }
+  let token = sessionStorage.getItem('fax_access_token');
+  if (!token) { token = await _refreshToken(); }  // [TOKEN-REFRESH-FIX]
+  if (!token) { alert('セッションが切れました。再ログインしてください。'); login(); return; }
   const btn = document.getElementById(buttonId);
   if (btn) { btn.disabled = true; btn.textContent = '⏳ 更新中...'; }
   try {
@@ -908,15 +910,42 @@ function downloadResults() {
   a.click();
 }
 
+// [TOKEN-REFRESH-FIX] refresh_token으로 access_token 갱신
+async function _refreshToken() {
+    const rt = sessionStorage.getItem('fax_refresh_token');
+    if (!rt) return null;
+    try {
+        const resp = await fetch(
+            `https://login.microsoftonline.com/${OAUTH.tenantId}/oauth2/v2.0/token`,
+            { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({ client_id: OAUTH.clientId, grant_type: 'refresh_token',
+                  refresh_token: rt, scope: OAUTH.scopes }) }
+        );
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        sessionStorage.setItem('fax_access_token', data.access_token);
+        if (data.refresh_token) sessionStorage.setItem('fax_refresh_token', data.refresh_token);
+        return data.access_token;
+    } catch(e) { return null; }
+}
+
 async function _uploadJsonToPath(pathSegs, body, token) {
     const driveId = 'b!ZK58_9YllU-vETQD3Xz0TbOInXbVCXJHnQ2280KJBArFLeM_18EgRbSeoO-TW__U';
     const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${pathSegs.map(encodeURIComponent).join('/')}:/content`;
     if (!token) throw new Error('no token');
-    const resp = await fetch(url, {
+    const _doFetch = (t) => fetch(url, {
         method:  'PUT',
-        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' },
         body:    typeof body === 'string' ? body : JSON.stringify(body, null, 2),
     });
+    let resp = await _doFetch(token);
+    if (resp.status === 401) {
+        // [TOKEN-REFRESH-FIX] 401 → refresh_token으로 재시도
+        const newToken = await _refreshToken();
+        if (newToken) {
+            resp = await _doFetch(newToken);
+        }
+    }
     if (!resp.ok) throw new Error('upload failed: ' + resp.status);
     return resp;
 }
@@ -1156,7 +1185,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 08:51</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 08:54</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
