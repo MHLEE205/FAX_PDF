@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v3.1</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v3.2</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 09:03</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 09:06</div>
   </div>
 </div>
 
@@ -430,25 +430,32 @@ async function sendAll() {
   const btnD = document.getElementById('btn-send-all-d');
   if (btn)  { btn.disabled  = true; btn.textContent  = '⏳ 送信中...'; }
   if (btnD) { btnD.disabled = true; btnD.textContent = '⏳ 送信中...'; }
+  const errors = [];
+  // FAX 결과 송신
   try {
     if (Object.values(state).some(i => i.status==='確認予定'||i.status==='対象外')) {
       Object.values(state).forEach(i => { if (i.status==='確認予定') i.status='確認完了'; });
       await uploadResults();
     }
-    for (const idx of [...mdPending].sort((a,b)=>a-b)) {
-      await _doConfirmHannyuhyoCard(idx); mdPending.delete(idx);
-    }
-    // [PR-RECHECK-CT-CONFIRM v2] 재확인 CT 송신
-    for (const key of [...recheckPending]) {
-      await _doRecheckConfirm(parseInt(key)); recheckPending.delete(key);
-    }
+  } catch(e) { errors.push('FAX: ' + e.message); }
+  // [SEND-ALL-PARTIAL-FIX] 각 IV 독립 처리 — 1건 실패해도 나머지 계속 진행
+  for (const idx of [...mdPending].sort((a,b)=>a-b)) {
+    try { await _doConfirmHannyuhyoCard(idx); mdPending.delete(idx); }
+    catch(e) { errors.push('IV#' + idx + ': ' + e.message); }
+  }
+  // [PR-RECHECK-CT-CONFIRM v2] 재확인 CT 송신
+  for (const key of [...recheckPending]) {
+    try { await _doRecheckConfirm(parseInt(key)); recheckPending.delete(key); }
+    catch(e) { errors.push('RECHECK#' + key + ': ' + e.message); }
+  }
+  if (errors.length) {
+    alert('一部送信失敗:\n' + errors.join('\n'));
+    if (btn)  { btn.disabled=false;  btn.textContent='📤 一括送信'; }
+    if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; }
+  } else {
     if (btn)  { btn.textContent='✅ 送信完了';  btn.style.background='#155724';  btn.style.borderColor='#155724'; }
     if (btnD) { btnD.textContent='✅ 送信完了'; btnD.style.background='#155724'; btnD.style.borderColor='#155724'; }
     _lockUpdateBtns(); // [PR-UPDATE-LOCK-AFTER-SEND-v1 2026-06-25]
-  } catch(e) {
-    alert('送信失敗: '+e.message);
-    if (btn)  { btn.disabled=false;  btn.textContent='📤 一括送信'; }
-    if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; }
   }
 }
 function renderAddCtForm(iv_no, idx) {
@@ -1185,7 +1192,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 09:03</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 09:06</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
