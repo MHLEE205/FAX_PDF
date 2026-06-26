@@ -110,7 +110,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v3.6</span></h1>
+    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v3.7</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 16:09</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 16:16</div>
   </div>
 </div>
 
@@ -402,7 +402,9 @@ async function _doConfirmHannyuhyoCard(idx) {
       t_w: parseFloat(document.getElementById(`md-tw-d-${idx}-${ci}`)?.value)||null,
       g_w: parseFloat(document.getElementById(`md-gw-${idx}-${ci}`)?.value)||null,
       bales: parseInt(document.getElementById(`md-bales-${idx}-${ci}`)?.value)||null,
-      packer: _packerVal, plant: _plantVal, confirmed_at: new Date().toISOString() };
+      packer: _packerVal, plant: _plantVal, confirmed_at: new Date().toISOString(),
+      new_ct_no: (document.getElementById(`md-new-ct-${idx}-${ci}`)?.value || '').trim().toUpperCase() || null,  // [PR-CT-NO-RENAME-TOOL-v1]
+    };
   }).filter(Boolean);
   const addedRows = _addCtRows[idx] || [];
   for (let n = 0; n < addedRows.length; n++) {
@@ -520,6 +522,16 @@ async function submitBkgReassign(idx, oldIvNo, pdfNames, pdfPaths) {
 // ── END PR-HANNYUHYO-CONFIRM-TOGGLE / PENDING-INJECT / BKG-REASSIGN ──
 
 // [PR-UPDATE-LOCK-AFTER-SEND-v1 2026-06-25] 送信完了後5分間UPDATEボタン無効化+カウントダウン
+// [PR-CT-NO-RENAME-TOOL-v1 2026-06-26]
+function toggleRecheckCtRename(idx, ci) {
+  const el = document.getElementById(`rc-rename-${idx}-${ci}`);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function toggleModeDCtRename(idx, ci) {
+  const el = document.getElementById(`md-rename-${idx}-${ci}`);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 function _lockUpdateBtns() {
   const ids = ['btn-update-fax','btn-jikkyou-fax','btn-update-d','btn-jikkyou-d'];
   const orig = {};
@@ -622,6 +634,11 @@ function buildRecheckCard(item, idx) {
         <div style="font-size:12px;font-weight:600;">
           ${ct.ct_no}
           ${ct.packer ? `<span style="font-size:10px;color:#1a73e8;background:#e8f0fe;padding:1px 6px;border-radius:3px;margin-left:4px;">${ct.packer}</span>` : ''}
+          <button onclick="toggleRecheckCtRename(${idx},${ci})" style="font-size:10px;padding:2px 7px;border:1px solid #e57373;border-radius:3px;background:#fff;color:#e57373;cursor:pointer;margin-left:6px;">CT番号修正</button>
+          <div id="rc-rename-${idx}-${ci}" style="display:none;margin-top:4px;">
+            <span style="font-size:11px;color:#e57373;font-weight:600;">新CT番号</span>
+            <input id="rc-new-ct-${idx}-${ci}" type="text" placeholder="例: CMAU7525968" style="font-size:12px;padding:3px 6px;border:1px solid #e57373;border-radius:3px;width:140px;margin-left:4px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+          </div>
           ${pdfLink}
           ${keishoLink}
         </div>
@@ -686,6 +703,7 @@ async function _doRecheckConfirm(idx) {
       g_w:       document.getElementById(`rc-gw-${idx}-${ci}`)?.value    || null,
       bales:     document.getElementById(`rc-bales-${idx}-${ci}`)?.value || null,
       work_date: document.getElementById(`rc-date-${idx}-${ci}`)?.value  || null,
+      new_ct_no: (document.getElementById(`rc-new-ct-${idx}-${ci}`)?.value || '').trim().toUpperCase() || null,  // [PR-CT-NO-RENAME-TOOL-v1]
     };
   }).filter(Boolean);
   if (!confirmedCts.length) return;
@@ -1205,7 +1223,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 16:09</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-26 16:16</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1383,6 +1401,11 @@ function buildModeDCard(item, idx) {
           <div style="font-size:12px;font-weight:600;">${ct.ct_no || '(CT 미매핑)'}</div>
           ${ct.packer ? `<span style="font-size:10px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:1px 6px;border-radius:3px;">${ct.packer}</span>` : ''}
           ${ct.plant ? `<span style="font-size:10px;color:#555;background:#f0f0f0;padding:1px 6px;border-radius:3px;">${ct.plant}</span>` : ''}
+          <button onclick="toggleModeDCtRename(${idx},${ci})" style="font-size:10px;padding:2px 7px;border:1px solid #e57373;border-radius:3px;background:#fff;color:#e57373;cursor:pointer;margin-left:4px;">CT番号修正</button>
+        </div>
+        <div id="md-rename-${idx}-${ci}" style="display:none;margin:4px 0 2px 0;">
+          <span style="font-size:11px;color:#e57373;font-weight:600;">新CT番号</span>
+          <input id="md-new-ct-${idx}-${ci}" type="text" placeholder="例: CMAU7525968" style="font-size:12px;padding:3px 6px;border:1px solid #e57373;border-radius:3px;width:140px;margin-left:4px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
         </div>
         <button id="md-ct-confirm-${idx}-${ci}" data-checked="false"
           onclick="toggleCtConfirm(${idx},${ci})"
