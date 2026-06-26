@@ -443,15 +443,21 @@ async function sendAll() {
     try { await _doConfirmHannyuhyoCard(idx); mdPending.delete(idx); }
     catch(e) { errors.push('IV#' + idx + ': ' + e.message); }
   }
-  // [PR-RECHECK-CT-CONFIRM v2] 재확인 CT 송신
-  for (const key of [...recheckPending]) {
-    try { await _doRecheckConfirm(parseInt(key)); recheckPending.delete(key); }
-    catch(e) { errors.push('RECHECK#' + key + ': ' + e.message); }
+  // [PR-RECHECK-PENDING-CT-KEY-v1 2026-06-26] CT 단위 key → idx 단위 그룹화 후 1회 호출
+  const _rcIdxSet = new Set([...recheckPending].map(k => parseInt(k.split('-')[0])));
+  for (const _rcIdx of [..._rcIdxSet].sort((a,b)=>a-b)) {
+    try {
+      await _doRecheckConfirm(_rcIdx);
+      for (const k of [...recheckPending]) {
+        if (parseInt(k.split('-')[0]) === _rcIdx) recheckPending.delete(k);
+      }
+    } catch(e) { errors.push('RECHECK#' + _rcIdx + ': ' + e.message); }
   }
   if (errors.length) {
     alert('一部送信失敗:\n' + errors.join('\n'));
     if (btn)  { btn.disabled=false;  btn.textContent='📤 一括送信'; }
     if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; }
+    _lockUpdateBtns(); // [PR-RECHECK-PENDING-CT-KEY-v1 2026-06-26] 에러 시에도 UPDATE 잠금
   } else {
     if (btn)  { btn.textContent='✅ 送信完了';  btn.style.background='#155724';  btn.style.borderColor='#155724'; }
     if (btnD) { btnD.textContent='✅ 送信完了'; btnD.style.background='#155724'; btnD.style.borderColor='#155724'; }
@@ -655,7 +661,7 @@ function toggleRecheckConfirm(idx, ci) {
   btn.style.background = isChecked ? '#1976d2' : '#2e7d32';
   const item = (RECHECK_CT_DATA || [])[idx];
   if (!item) return;
-  const key = `${idx}`;
+  const key = `${idx}-${ci}`;  // [PR-RECHECK-PENDING-CT-KEY-v1 2026-06-26] CT 단위
   if (!isChecked) { recheckPending.add(key); } else { recheckPending.delete(key); }
   _refreshSendAllBtn();
 }
