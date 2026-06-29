@@ -128,6 +128,11 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
                background:#6a1b9a; color:#fff; cursor:pointer; margin-right:4px;">
         📊 実況表 UPDATE
       </button>
+      <button id="btn-reminder-toggle" onclick="toggleReminderPanel()"
+        style="font-size:11px; padding:3px 10px; border:1px solid #e67e22; border-radius:4px;
+               background:#e67e22; color:#fff; cursor:pointer; margin-right:4px;">
+        ✉ リマインダー
+      </button>
       <button id="btn-update-fax" onclick="_triggerNotifyUpdate('btn-update-fax')"
         style="font-size:11px; padding:3px 10px; border:1px solid #1976d2; border-radius:4px;
                background:#1976d2; color:#fff; cursor:pointer; margin-right:4px;">
@@ -135,8 +140,18 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 19:08</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 19:36</div>
   </div>
+</div>
+
+<!-- ✉ リマインダー パネル [2026-06-29] -->
+<div id="reminder-panel" style="display:none; margin-top:16px; background:#fff; border:1px solid #e67e22; border-radius:8px; padding:16px 20px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+    <div style="font-size:14px; font-weight:600; color:#e67e22;">✉ リマインダー メール 送信</div>
+    <button onclick="toggleReminderPanel()" style="font-size:11px; padding:2px 8px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer;">✕ 閉じる</button>
+  </div>
+  <div id="reminder-meta" style="font-size:11px; color:#888; margin-bottom:12px;"></div>
+  <div id="reminder-cards"></div>
 </div>
 
 <div id="cards-area"></div>
@@ -1223,7 +1238,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 19:08</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 19:36</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1244,7 +1259,7 @@ init();
 <script>
 // [PR-HANNYUHYO-VISIBILITY 2026-05-27 작업 D-2]: 모드 B 데이터 + 함수
 const REVIEW_DATA = {};
-const NEEDS_REVIEW_DATA = {"items": [{"type": "root_needs_review", "iv_no": null, "ct_no": "_FUJI_NO_BKG", "packer": null, "email_dir": null, "created_at": null, "photos": []}], "active_ivs": ["LEENAI_FIX", "NA2606-03", "NA2606-10", "NA2606-12", "NA2606-14", "NA2606-17", "NA2606-18", "NA2606-19", "NA2606-20", "NA2606-21", "NAS2606-08", "NAS2606-21", "NAS2606-22", "NCA2606-04", "NCL2606-06", "NCL2607-01", "NCL2607-02", "NCV2607-01", "NCV2607-02", "NDD2606-01", "NDW2606-07", "NDW2607-01", "NHA2606-32", "NHA2607-01", "NHA2607-21", "NHS2606-03", "NJJ2606-08", "NJJ2606-09", "NJJ2606-10", "NJJ2606-11", "NJJ2606-23", "NJS2606-01", "NMG2606-21", "NMG2606-22", "NNE2607-21", "NNT2606-01", "NNT2606-02", "NNT2606-03", "NRE2607-01", "NSG2606-04", "NSG2606-23", "NSG2607-03", "NSG2607-04", "NSG2607-05", "NSG2607-21", "NTH2607-21", "NTQ2604-02", "NTQ2604-03", "NTQ2604-23", "UYC2607-01"]};
+const NEEDS_REVIEW_DATA = {"items": [], "active_ivs": ["LEENAI_FIX", "NA2606-03", "NA2606-10", "NA2606-12", "NA2606-14", "NA2606-17", "NA2606-18", "NA2606-19", "NA2606-20", "NA2606-21", "NAS2606-08", "NAS2606-21", "NAS2606-22", "NCA2606-04", "NCL2606-06", "NCL2607-01", "NCL2607-02", "NCV2607-01", "NCV2607-02", "NDD2606-01", "NDW2606-07", "NDW2607-01", "NHA2606-32", "NHA2607-01", "NHA2607-21", "NHS2606-03", "NJJ2606-08", "NJJ2606-09", "NJJ2606-10", "NJJ2606-11", "NJJ2606-23", "NJS2606-01", "NMG2606-21", "NMG2606-22", "NNE2607-21", "NNT2606-01", "NNT2606-02", "NNT2606-03", "NRE2607-01", "NSG2606-04", "NSG2606-23", "NSG2607-03", "NSG2607-04", "NSG2607-05", "NSG2607-21", "NTH2607-21", "NTQ2604-02", "NTQ2604-03", "NTQ2604-23", "UYC2607-01"]};
 const CHECK_PHOTO_DATA  = [];
 // [PR-HANNYUHYO-CARD-B 2026-06-15]
 const PENDING_HANNYUHYO_DATA = [];
@@ -1630,6 +1645,99 @@ function confirmHannyuhyoCard(idx) {
   if (doneEl) { doneEl.textContent=`🕐 確認予定（${t}）— もう一度押すと取消`; doneEl.classList.add('show'); }
   if (btn) { btn.textContent='↩ 取消'; btn.style.background='#e67e22'; btn.style.borderColor='#e67e22'; }
   _refreshSendAllBtn();
+}
+
+// ── ✉ リマインダー [2026-06-29] ──────────────────────────────
+
+let _reminderOpen = false;
+
+function toggleReminderPanel() {
+  _reminderOpen = !_reminderOpen;
+  const panel = document.getElementById('reminder-panel');
+  const btn   = document.getElementById('btn-reminder-toggle');
+  panel.style.display = _reminderOpen ? 'block' : 'none';
+  if (btn) btn.style.background = _reminderOpen ? '#c0392b' : '#e67e22';
+  if (_reminderOpen) renderReminder();
+}
+
+async function renderReminder() {
+  const meta  = document.getElementById('reminder-meta');
+  const cards = document.getElementById('reminder-cards');
+  meta.textContent = '読み込み中...';
+  cards.innerHTML  = '';
+  try {
+    const r = await fetch('http://127.0.0.1:18765/reminder-targets');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data    = await r.json();
+    const targets = data.targets || [];
+    const now     = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+    meta.textContent = `対象: ${targets.length} 件 — 取得: ${now}`;
+    if (targets.length === 0) {
+      cards.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:12px;">対象IVはありません（未回収なし / CUT済）</div>';
+      return;
+    }
+    const stageLabel = { d2:'1次 (D-2)', d1:'2次 (D-1)', overdue:'期限超過', upcoming:'事前通知' };
+    const stageColor = { d2:'#e67e22', d1:'#c0392b', overdue:'#888', upcoming:'#27ae60' };
+    cards.innerHTML = targets.map((t, i) => {
+      const sc   = stageColor[t.stage]  || '#888';
+      const sl   = stageLabel[t.stage]  || t.stage;
+      const rnd  = (t.stage === 'd1' || t.stage === 'overdue') ? 2 : 1;
+      const sent = rnd === 2 ? t.sent_r2 : t.sent_r1;
+      const emails = (t.to_emails || []).join(', ') || '（未登録）';
+      const noEmail = !t.to_emails || !t.to_emails.length;
+      return `<div id="rcard-${i}" style="border:1px solid ${sc}; border-radius:6px; padding:12px 14px; margin-bottom:10px; opacity:${sent ? 0.65 : 1};">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+    <span style="font-size:10px; padding:2px 8px; border-radius:4px; background:${sc}; color:#fff; font-weight:600;">${sl}</span>
+    <span style="font-weight:600; font-size:13px;">${t.iv_no}</span>
+    <span style="font-size:11px; color:#555;">${t.packer_name || t.packer_code}</span>
+    <span style="font-size:11px; color:#aaa;">CUT: ${t.cy_cut}</span>
+    ${sent ? '<span style="font-size:11px;color:#27ae60;margin-left:auto;">✓ 送信済</span>' : ''}
+  </div>
+  <div style="font-size:11px; color:#666; margin-bottom:4px;">未着写真: <b>${t.missing_photo}</b>CT &nbsp;|&nbsp; 未着搬入票: <b>${t.missing_hannyuhyo}</b>CT</div>
+  <div style="font-size:11px; color:#888; margin-bottom:10px; word-break:break-all;">送信先: ${emails}</div>
+  <button onclick="sendReminder('${t.iv_no}','${t.packer_code}',${rnd},this)"
+    ${sent || noEmail ? 'disabled' : ''}
+    style="font-size:12px; padding:5px 18px; border:1px solid ${sc}; border-radius:4px;
+           background:${(sent || noEmail) ? '#f0f0f0' : sc};
+           color:${(sent || noEmail) ? '#aaa' : '#fff'};
+           cursor:${(sent || noEmail) ? 'default' : 'pointer'};">
+    ${sent ? '送信済' : noEmail ? '送信先なし' : '📧 メール送信'}
+  </button>
+</div>`;
+    }).join('');
+  } catch(e) {
+    meta.textContent = '';
+    cards.innerHTML = `<div style="color:#c0392b; padding:12px; font-size:12px; background:#fff5f5; border-radius:4px;">
+      ⚠ サーバー接続失敗: ${e.message}<br>
+      <span style="color:#888; font-size:11px;">server_phase4.py が起動中か確認してください（ポート 18765）</span>
+    </div>`;
+  }
+}
+
+async function sendReminder(ivNo, packerCode, rnd, btn) {
+  if (!confirm(`【${ivNo} / ${packerCode}】\nリマインダーメールを送信しますか？`)) return;
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+  try {
+    const r = await fetch('http://127.0.0.1:18765/send-reminder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ iv_no: ivNo, packer_code: packerCode, round: rnd }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      btn.textContent = '✓ 送信完了';
+      btn.style.background  = '#27ae60';
+      btn.style.borderColor = '#27ae60';
+      btn.style.color       = '#fff';
+    } else {
+      throw new Error(data.msg || '不明なエラー');
+    }
+  } catch(e) {
+    btn.disabled    = false;
+    btn.textContent = '📧 メール送信';
+    alert('送信失敗: ' + e.message);
+  }
 }
 </script>
 </body>
