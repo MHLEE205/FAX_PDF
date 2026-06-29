@@ -135,7 +135,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 16:16</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 16:32</div>
   </div>
 </div>
 
@@ -1223,7 +1223,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 16:16</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-29 16:32</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1247,8 +1247,8 @@ const REVIEW_DATA = {};
 const NEEDS_REVIEW_DATA = {"items": [{"type": "root_needs_review", "iv_no": null, "ct_no": "_FUJI_NO_BKG", "packer": null, "email_dir": null, "created_at": null, "photos": []}], "active_ivs": ["LEENAI_FIX", "NA2606-03", "NA2606-10", "NA2606-12", "NA2606-14", "NA2606-17", "NA2606-18", "NA2606-19", "NA2606-20", "NA2606-21", "NAS2606-08", "NAS2606-21", "NAS2606-22", "NCA2606-04", "NCL2606-06", "NCL2607-01", "NCL2607-02", "NCV2607-01", "NCV2607-02", "NDD2606-01", "NDW2606-07", "NDW2607-01", "NHA2606-32", "NHA2607-01", "NHA2607-21", "NHS2606-03", "NJJ2606-08", "NJJ2606-09", "NJJ2606-10", "NJJ2606-11", "NJJ2606-23", "NJS2606-01", "NMG2606-21", "NMG2606-22", "NNE2607-21", "NNT2606-01", "NNT2606-02", "NNT2606-03", "NRE2607-01", "NSG2606-04", "NSG2606-23", "NSG2607-03", "NSG2607-04", "NSG2607-05", "NSG2607-21", "NTH2607-21", "NTQ2604-02", "NTQ2604-03", "NTQ2604-23", "UYC2607-01"]};
 const CHECK_PHOTO_DATA  = [];
 // [PR-HANNYUHYO-CARD-B 2026-06-15]
-const PENDING_HANNYUHYO_DATA = [{"iv_no": "NJJ2606-08", "bkg_no": "HASLJ01260500702", "cy_cut": "2026-06-30", "pdf_names": ["20260626091342-0001.pdf", "DOC260625-20260625091617.pdf", "新聞(本社)0624.pdf", "新聞(本社)0626.pdf", "新聞(本社)0629.pdf"], "pdf_paths": ["C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\NJJ2606-08\\搬入票\\20260626091342-0001.pdf", "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\NJJ2606-08\\搬入票\\DOC260625-20260625091617.pdf", "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\NJJ2606-08\\搬入票\\新聞(本社)0624.pdf", "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\NJJ2606-08\\搬入票\\新聞(本社)0626.pdf", "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\NJJ2606-08\\搬入票\\新聞(本社)0629.pdf"], "cts": [{"ct_no": "SKHU6460990", "seal_from_photo": "HAL274327", "seal_from_pdf": "HAL274327", "seal_no": "HAL274327", "t_w_from_photo": null, "t_w_from_pdf": 3700, "n_w": 22160, "t_w": 3700, "g_w": 25860, "bales": null, "packer": "HANWA", "plant": "", "hannyuhyo_pdf_name": "新聞(本社)0624.pdf", "keisho_photos": [], "keisho_photo_name": ""}]}];
-const RECHECK_CT_DATA = [{"iv_no": "NJJ2606-08", "cy_cut": "2026-06-30", "bkg_no": "HASLJ01260500702", "cts": [{"ct_no": "SEKU6258280", "packer": "HANWA", "seal_from_pdf": "HAL274255", "n_w": 22230, "t_w": 3700, "g_w": 25930, "bales": null, "work_date": "2026-06-25", "hannyuhyo_pdf_name": "新聞(本社)0626.pdf", "hannyuhyo_pdf_subdir": "", "keisho_photos": [], "keisho_photo_name": ""}, {"ct_no": "SKHU6468332", "packer": "HANWA", "seal_from_pdf": "HAL274329", "n_w": 22600, "t_w": 3700, "g_w": 26300, "bales": null, "work_date": "2026-06-29", "hannyuhyo_pdf_name": "新聞(本社)0629.pdf", "hannyuhyo_pdf_subdir": "", "keisho_photos": [], "keisho_photo_name": ""}]}];
+const PENDING_HANNYUHYO_DATA = [];
+const RECHECK_CT_DATA = [];
 // [PR-UNRECEIVED-ALERT 2026-06-24]
 const UNRECEIVED_ALERT_DATA = [];
 
