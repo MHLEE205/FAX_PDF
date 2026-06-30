@@ -140,7 +140,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 16:51</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 16:57</div>
   </div>
 </div>
 
@@ -1253,7 +1253,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 16:51</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 16:57</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1710,14 +1710,24 @@ async function renderReminder() {
   </div>
   <div style="font-size:11px; color:#666; margin-bottom:4px;">未着写真: <b>${t.missing_photo}</b>CT &nbsp;|&nbsp; 未着搬入票: <b>${t.missing_hannyuhyo}</b>CT</div>
   <div style="font-size:11px; color:#888; margin-bottom:10px; word-break:break-all;">送信先: ${emails}</div>
-  <button onclick="sendReminder('${t.iv_no}','${t.packer_code}',${rnd},this)"
-    ${sent || noEmail ? 'disabled' : ''}
-    style="font-size:12px; padding:5px 18px; border:1px solid ${sc}; border-radius:4px;
-           background:${(sent || noEmail) ? '#f0f0f0' : sc};
-           color:${(sent || noEmail) ? '#aaa' : '#fff'};
-           cursor:${(sent || noEmail) ? 'default' : 'pointer'};">
-    ${sent ? '送信済' : noEmail ? '送信先なし' : '📧 メール送信'}
-  </button>
+  <div style="display:flex; gap:6px; align-items:center;">
+    <button onclick="sendReminder('${t.iv_no}','${t.packer_code}',${rnd},this,false)"
+      ${sent || noEmail ? 'disabled' : ''}
+      style="font-size:12px; padding:5px 18px; border:1px solid ${sc}; border-radius:4px;
+             background:${(sent || noEmail) ? '#f0f0f0' : sc};
+             color:${(sent || noEmail) ? '#aaa' : '#fff'};
+             cursor:${(sent || noEmail) ? 'default' : 'pointer'};">
+      ${sent ? '送信済' : noEmail ? '送信先なし' : '📧 メール送信'}
+    </button>
+    <button onclick="sendReminder('${t.iv_no}','${t.packer_code}',${rnd},this,true)"
+      ${noEmail ? 'disabled' : ''}
+      style="font-size:12px; padding:5px 14px; border:1px solid #7f8c8d; border-radius:4px;
+             background:${noEmail ? '#f0f0f0' : '#7f8c8d'};
+             color:${noEmail ? '#aaa' : '#fff'};
+             cursor:${noEmail ? 'default' : 'pointer'};">
+      📋 下書き
+    </button>
+  </div>
 </div>`;
     }).join('');
   } catch(e) {
@@ -1729,29 +1739,39 @@ async function renderReminder() {
   }
 }
 
-async function sendReminder(ivNo, packerCode, rnd, btn) {
-  if (!confirm(`【${ivNo} / ${packerCode}】\nリマインダーメールを送信しますか？`)) return;
+// [PR-REMINDER-DRAFT-RESTORE 2026-06-30] draft パラメータ追加
+async function sendReminder(ivNo, packerCode, rnd, btn, draft=false) {
+  const actionLabel = draft ? '下書き保存' : 'メール送信';
+  if (!confirm(`【${ivNo} / ${packerCode}】\n${actionLabel}しますか？`)) return;
   btn.disabled = true;
-  btn.textContent = '送信中...';
+  btn.textContent = draft ? '保存中...' : '送信中...';
   try {
     const r = await fetch('http://192.168.1.34:18765/send-reminder', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ iv_no: ivNo, packer_code: packerCode, round: rnd }),
+      body: JSON.stringify({ iv_no: ivNo, packer_code: packerCode, round: rnd, draft: draft }),
     });
     const data = await r.json();
     if (data.ok) {
-      btn.textContent = '✓ 送信完了';
-      btn.style.background  = '#27ae60';
-      btn.style.borderColor = '#27ae60';
-      btn.style.color       = '#fff';
+      if (draft) {
+        btn.textContent       = '✓ 下書き済';
+        btn.style.background  = '#95a5a6';
+        btn.style.borderColor = '#95a5a6';
+        btn.style.color       = '#fff';
+        btn.disabled          = false;  // 下書きは何度でも可
+      } else {
+        btn.textContent       = '✓ 送信完了';
+        btn.style.background  = '#27ae60';
+        btn.style.borderColor = '#27ae60';
+        btn.style.color       = '#fff';
+      }
     } else {
       throw new Error(data.msg || '不明なエラー');
     }
   } catch(e) {
     btn.disabled    = false;
-    btn.textContent = '📧 メール送信';
-    alert('送信失敗: ' + e.message);
+    btn.textContent = draft ? '📋 下書き' : '📧 メール送信';
+    alert((draft ? '下書き保存失敗: ' : '送信失敗: ') + e.message);
   }
 }
 </script>
