@@ -140,7 +140,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 17:37</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 18:11</div>
   </div>
 </div>
 
@@ -272,22 +272,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20260630143414-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260630143414-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\_FAX\\_CHECK_FAX\\20260630143414-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-06-30T14:34:14+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-06-30T06:10:05.692664+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
@@ -1253,7 +1238,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 17:37</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-06-30 18:11</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
