@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:38</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:45</div>
   </div>
 </div>
 
@@ -1239,7 +1239,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:38</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:45</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1788,8 +1788,8 @@ function _renderAddrTable(filterMode, searchText) {
   const packers = window._addrMgmtData || [];
   const q = (searchText || '').toLowerCase();
   const filtered = packers.filter(function(p) {
-    if (filterMode === 'registered' && !p.emails.length) return false;
-    if (filterMode === 'unregistered' && p.emails.length) return false;
+    if (filterMode === 'registered' && !p.emails.some(function(e){ return e.source === 'system'; })) return false;
+    if (filterMode === 'unregistered' && p.emails.some(function(e){ return e.source === 'system'; })) return false;
     if (q) {
       const inCode = p.packer_code.toLowerCase().includes(q);
       const inEmail = p.emails.some(function(e){ return e.address.toLowerCase().includes(q); });
@@ -1799,29 +1799,41 @@ function _renderAddrTable(filterMode, searchText) {
   });
 
   const rows = filtered.map(function(p) {
+    const pcSafe = p.packer_code.replace(/[^A-Za-z0-9_]/g, '_');
     const active = p.has_active_booking
       ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#27ae60;color:#fff;margin-left:4px;">活動中</span>' : '';
-    const emailBadges = p.emails.map(function(e) {
-      const isOverride = e.source === 'override';
-      const bg = isOverride ? '#27ae60' : '#2980b9';
-      const label = isOverride ? '手動' : 'システム';
-      const delBtn = isOverride
-        ? `<button onclick="deleteAddrOverride('${p.packer_code}','${e.address}')"
-             style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:11px;padding:0 2px;margin-left:2px;">✕</button>`
-        : '';
-      return `<span style="display:inline-flex;align-items:center;background:#f0f4ff;border:1px solid #cce;border-radius:12px;padding:2px 8px;margin:2px;font-size:11px;">
-        <span style="font-size:9px;padding:0 4px;border-radius:8px;background:${bg};color:#fff;margin-right:4px;">${label}</span>
-        ${e.address}${delBtn}</span>`;
+
+    // システム登録メール (読み取り専用)
+    const sysEmails = p.emails.filter(function(e){ return e.source === 'system'; });
+    const sysCol = sysEmails.length
+      ? sysEmails.map(function(e){
+          return `<div style="display:inline-flex;align-items:center;background:#e8f0fe;border:1px solid #aac4f0;border-radius:12px;padding:3px 10px;margin:2px 2px;font-size:11px;color:#1a56a0;">
+            📧 ${e.address}</div>`;
+        }).join('')
+      : '<span style="font-size:11px;color:#bbb;font-style:italic;">（未登録）</span>';
+
+    // 手動追加メール + インライン入力フォーム
+    const overrideEmails = p.emails.filter(function(e){ return e.source === 'override'; });
+    const overrideChips = overrideEmails.map(function(e){
+      return `<div style="display:inline-flex;align-items:center;background:#eafaf1;border:1px solid #a9dfbf;border-radius:12px;padding:3px 10px;margin:2px 2px;font-size:11px;color:#1e8449;">
+        ＋ ${e.address}
+        <button onclick="deleteAddrOverride('${p.packer_code}','${e.address}')"
+          style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:12px;padding:0 0 0 6px;line-height:1;">✕</button>
+      </div>`;
     }).join('');
-    const noEmail = !p.emails.length
-      ? '<span style="font-size:11px;color:#aaa;">（未登録）</span>' : emailBadges;
-    return `<tr style="border-bottom:1px solid #f0f0f0;">
-      <td style="padding:8px 12px;font-size:12px;white-space:nowrap;font-weight:600;">${p.packer_code}${active}</td>
-      <td style="padding:8px 12px;font-size:12px;">${noEmail}</td>
-      <td style="padding:8px 6px;white-space:nowrap;">
-        <button onclick="showAddrAddForm('${p.packer_code}')"
-          style="font-size:11px;padding:3px 10px;border:1px solid #6c3fac;border-radius:4px;background:#fff;color:#6c3fac;cursor:pointer;">＋ 追加</button>
-      </td>
+
+    const addRow = `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;">
+      <input id="addr-input-${pcSafe}" type="email" placeholder="追加するメールアドレス"
+        style="font-size:11px;padding:3px 8px;border:1px solid #c9b8f0;border-radius:4px;width:210px;"
+        onkeydown="if(event.key==='Enter') addAddrOverride('${p.packer_code}','addr-input-${pcSafe}')">
+      <button onclick="addAddrOverride('${p.packer_code}','addr-input-${pcSafe}')"
+        style="font-size:11px;padding:3px 10px;border:1px solid #6c3fac;border-radius:4px;background:#6c3fac;color:#fff;cursor:pointer;white-space:nowrap;">＋ 追加</button>
+    </div>`;
+
+    return `<tr style="border-bottom:1px solid #f0f0f0;vertical-align:top;">
+      <td style="padding:10px 12px;font-size:12px;white-space:nowrap;font-weight:600;">${p.packer_code}${active}</td>
+      <td style="padding:10px 12px;font-size:12px;">${sysCol}</td>
+      <td style="padding:10px 12px;font-size:12px;">${overrideChips}${addRow}</td>
     </tr>`;
   }).join('');
 
@@ -1829,11 +1841,11 @@ function _renderAddrTable(filterMode, searchText) {
 <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
   <div style="display:flex;gap:4px;">
     ${['all','registered','unregistered'].map(function(m){
-      const labels = {all:'全て', registered:'登録済み', unregistered:'未登録'};
-      const active = m === filterMode;
+      const labels = {all:'全て', registered:'送信先あり', unregistered:'未登録'};
+      const isActive = m === filterMode;
       return `<button onclick="_renderAddrTable('${m}', document.getElementById('addr-search-input').value)"
         style="font-size:11px;padding:3px 10px;border:1px solid #6c3fac;border-radius:4px;
-               background:${active?'#6c3fac':'#fff'};color:${active?'#fff':'#6c3fac'};cursor:pointer;">
+               background:${isActive?'#6c3fac':'#fff'};color:${isActive?'#fff':'#6c3fac'};cursor:pointer;">
         ${labels[m]}</button>`;
     }).join('')}
   </div>
@@ -1842,17 +1854,17 @@ function _renderAddrTable(filterMode, searchText) {
     style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;width:200px;">
   <span style="font-size:11px;color:#888;">${filtered.length}件</span>
 </div>
-<div id="addr-add-form-area"></div>
 <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);">
   <thead>
     <tr style="background:#f5f0ff;font-size:12px;color:#555;">
-      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;">PACKER</th>
-      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;">登録メール</th>
-      <th style="padding:8px 12px;border-bottom:1px solid #e0d8f0;"></th>
+      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;width:120px;">PACKER</th>
+      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;">送信先メール（システム登録）</th>
+      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;">追加送信先（手動）</th>
     </tr>
   </thead>
   <tbody>${rows || '<tr><td colspan="3" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">該当なし</td></tr>'}</tbody>
-</table>`;
+</table>
+<p style="font-size:11px;color:#888;margin-top:8px;">💡 追加した送信先にも、既存のシステム登録と同じリマインダーメールが送信されます。</p>`;
 }
 
 function _filterAddrSearch(filterMode) {
@@ -1860,24 +1872,8 @@ function _filterAddrSearch(filterMode) {
   _renderAddrTable(filterMode, q);
 }
 
-function showAddrAddForm(packerCode) {
-  const formArea = document.getElementById('addr-add-form-area');
-  if (!formArea) return;
-  formArea.innerHTML = `
-<div style="background:#f5f0ff;border:1px solid #c9b8f0;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-  <span style="font-size:12px;font-weight:600;color:#6c3fac;">${packerCode} にメール追加:</span>
-  <input id="addr-new-input" type="email" placeholder="example@company.co.jp"
-    style="font-size:12px;padding:4px 8px;border:1px solid #c9b8f0;border-radius:4px;width:240px;">
-  <button onclick="addAddrOverride('${packerCode}')"
-    style="font-size:12px;padding:4px 12px;border:1px solid #6c3fac;border-radius:4px;background:#6c3fac;color:#fff;cursor:pointer;">追加</button>
-  <button onclick="document.getElementById('addr-add-form-area').innerHTML=''"
-    style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#888;cursor:pointer;">キャンセル</button>
-</div>`;
-  document.getElementById('addr-new-input').focus();
-}
-
-async function addAddrOverride(packerCode) {
-  const input = document.getElementById('addr-new-input');
+async function addAddrOverride(packerCode, inputId) {
+  const input = document.getElementById(inputId);
   if (!input) return;
   const address = input.value.trim().toLowerCase();
   if (!address || !address.includes('@')) { alert('正しいメールアドレスを入力してください'); return; }
