@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:28</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:36</div>
   </div>
 </div>
 
@@ -1239,7 +1239,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:28</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:36</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1800,42 +1800,57 @@ function _renderAddrTable(filterMode, searchText) {
 
   const rows = filtered.map(function(p) {
     const pcSafe = p.packer_code.replace(/[^A-Za-z0-9_]/g, '_');
-    const active = p.has_active_booking
+
+    // 送信対象カウント (実際に送信されるアドレス数)
+    const sysEmails     = p.emails.filter(function(e){ return e.source === 'system'; });
+    const overrideEmails= p.emails.filter(function(e){ return e.source === 'override'; });
+    const activeCount   = p.emails.filter(function(e){ return !e.is_disabled; }).length;
+    const activeBadge   = p.has_active_booking
       ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#27ae60;color:#fff;margin-left:4px;">活動中</span>' : '';
+    const sendCountBadge = activeCount > 0
+      ? `<div style="font-size:11px;color:#1a8754;font-weight:600;margin-top:4px;">📤 送信先: ${activeCount}件</div>`
+      : `<div style="font-size:11px;color:#c0392b;font-weight:600;margin-top:4px;">⚠ 送信先なし</div>`;
 
-    // システム登録メール + 停止/再開トグル
-    const sysEmails = p.emails.filter(function(e){ return e.source === 'system'; });
-    const sysCol = sysEmails.length
-      ? sysEmails.map(function(e){
-          const dis = e.is_disabled;
-          const chipStyle = dis
-            ? 'background:#f0f0f0;border:1px solid #ccc;color:#aaa;text-decoration:line-through;'
-            : 'background:#e8f0fe;border:1px solid #aac4f0;color:#1a56a0;';
-          const btnStyle = dis
-            ? 'font-size:10px;padding:1px 6px;border:1px solid #27ae60;border-radius:8px;background:#fff;color:#27ae60;cursor:pointer;margin-left:6px;white-space:nowrap;'
-            : 'font-size:10px;padding:1px 6px;border:1px solid #e67e22;border-radius:8px;background:#fff;color:#e67e22;cursor:pointer;margin-left:6px;white-space:nowrap;';
-          const btnLabel = dis ? '再開' : '停止';
-          const btnFn = dis
-            ? `enableAddr('${p.packer_code}','${e.address}')`
-            : `disableAddr('${p.packer_code}','${e.address}')`;
-          return `<div style="display:inline-flex;align-items:center;${chipStyle}border-radius:12px;padding:3px 8px;margin:2px 2px;font-size:11px;">
-            ${dis ? '🚫' : '📧'} ${e.address}
-            <button onclick="${btnFn}" style="${btnStyle}">${btnLabel}</button>
-          </div>`;
-        }).join('')
-      : '<span style="font-size:11px;color:#bbb;font-style:italic;">（未登録）</span>';
+    // システム登録メール: 送信中 と 停止中 を分けて表示
+    const sysActive   = sysEmails.filter(function(e){ return !e.is_disabled; });
+    const sysDisabled = sysEmails.filter(function(e){ return e.is_disabled; });
 
-    // 手動追加メール + インライン入力フォーム
-    const overrideEmails = p.emails.filter(function(e){ return e.source === 'override'; });
-    const overrideChips = overrideEmails.map(function(e){
-      return `<div style="display:inline-flex;align-items:center;background:#eafaf1;border:1px solid #a9dfbf;border-radius:12px;padding:3px 10px;margin:2px 2px;font-size:11px;color:#1e8449;">
-        ＋ ${e.address}
-        <button onclick="deleteAddrOverride('${p.packer_code}','${e.address}')"
-          style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:12px;padding:0 0 0 6px;line-height:1;">✕</button>
+    const activeChips = sysActive.map(function(e){
+      return `<div style="display:flex;align-items:center;background:#e6f9ee;border:2px solid #27ae60;border-radius:8px;padding:4px 10px;margin:2px 0;font-size:11px;color:#1a5c35;">
+        <span style="font-size:11px;font-weight:700;color:#27ae60;margin-right:6px;">✅ 送信する</span>
+        ${e.address}
+        <button onclick="disableAddr('${p.packer_code}','${e.address}')"
+          style="font-size:10px;padding:1px 8px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;margin-left:8px;white-space:nowrap;">停止</button>
       </div>`;
     }).join('');
 
-    const addRow = `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;">
+    const disabledChips = sysDisabled.length ? `
+      <div style="margin-top:6px;padding:6px 8px;background:#fdf0f0;border:1px solid #f5c6c6;border-radius:6px;">
+        <div style="font-size:10px;color:#c0392b;font-weight:700;margin-bottom:4px;">⛔ 停止中（リマインダー送信しない）</div>
+        ${sysDisabled.map(function(e){
+          return `<div style="display:flex;align-items:center;font-size:11px;color:#999;margin:2px 0;text-decoration:line-through;">
+            ${e.address}
+            <button onclick="enableAddr('${p.packer_code}','${e.address}')"
+              style="font-size:10px;padding:1px 8px;border:1px solid #27ae60;border-radius:4px;background:#fff;color:#27ae60;cursor:pointer;margin-left:8px;text-decoration:none;white-space:nowrap;">再開</button>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+
+    const sysCol = (sysActive.length || sysDisabled.length)
+      ? activeChips + disabledChips
+      : '<span style="font-size:11px;color:#bbb;font-style:italic;">（未登録）</span>';
+
+    // 手動追加メール + インライン入力フォーム
+    const overrideChips = overrideEmails.map(function(e){
+      return `<div style="display:flex;align-items:center;background:#e6f9ee;border:2px solid #27ae60;border-radius:8px;padding:4px 10px;margin:2px 0;font-size:11px;color:#1a5c35;">
+        <span style="font-size:11px;font-weight:700;color:#27ae60;margin-right:6px;">✅ 送信する</span>
+        ＋${e.address}
+        <button onclick="deleteAddrOverride('${p.packer_code}','${e.address}')"
+          style="font-size:10px;padding:1px 8px;border:1px solid #c0392b;border-radius:4px;background:#fff;color:#c0392b;cursor:pointer;margin-left:8px;white-space:nowrap;">削除</button>
+      </div>`;
+    }).join('');
+
+    const addRow = `<div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
       <input id="addr-input-${pcSafe}" type="email" placeholder="追加するメールアドレス"
         style="font-size:11px;padding:3px 8px;border:1px solid #c9b8f0;border-radius:4px;width:210px;"
         onkeydown="if(event.key==='Enter') addAddrOverride('${p.packer_code}','addr-input-${pcSafe}')">
@@ -1843,8 +1858,10 @@ function _renderAddrTable(filterMode, searchText) {
         style="font-size:11px;padding:3px 10px;border:1px solid #6c3fac;border-radius:4px;background:#6c3fac;color:#fff;cursor:pointer;white-space:nowrap;">＋ 追加</button>
     </div>`;
 
-    return `<tr style="border-bottom:1px solid #f0f0f0;vertical-align:top;">
-      <td style="padding:10px 12px;font-size:12px;white-space:nowrap;font-weight:600;">${p.packer_code}${active}</td>
+    return `<tr style="border-bottom:1px solid #e8e8e8;vertical-align:top;">
+      <td style="padding:10px 12px;font-size:12px;white-space:nowrap;font-weight:600;">
+        ${p.packer_code}${activeBadge}${sendCountBadge}
+      </td>
       <td style="padding:10px 12px;font-size:12px;">${sysCol}</td>
       <td style="padding:10px 12px;font-size:12px;">${overrideChips}${addRow}</td>
     </tr>`;
