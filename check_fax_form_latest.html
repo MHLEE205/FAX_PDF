@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:31</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:38</div>
   </div>
 </div>
 
@@ -152,6 +152,8 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
   <div id="reminder-meta" style="font-size:11px; color:#888; margin-bottom:12px;"></div>
   <div id="reminder-cards"></div>
 </div>
+
+<div id="addr-mgmt-area" style="display:none; padding:16px 0;"></div>
 
 <div id="cards-area"></div>
 <div class="summary" id="summary-area">
@@ -1237,7 +1239,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:31</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 13:38</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1309,7 +1311,12 @@ function initTabs() {
     '<button id="tab-reminder" onclick="switchMode(\'reminder\')"' +
     ' style="font-size:13px;padding:8px 20px;border:none;border-bottom:3px solid transparent;' +
     ' background:none;color:#555;cursor:pointer;font-weight:600;margin-bottom:-2px;' +
-    ' transition:color .15s,border-color .15s;">✉ リマインダー</button>';
+    ' transition:color .15s,border-color .15s;">✉ リマインダー</button>' +
+
+    '<button id="tab-addr-mgmt" onclick="switchMode(\'addr-mgmt\')"' +
+    ' style="font-size:13px;padding:8px 20px;border:none;border-bottom:3px solid transparent;' +
+    ' background:none;color:#555;cursor:pointer;font-weight:600;margin-bottom:-2px;' +
+    ' transition:color .15s,border-color .15s;">📬 送信先管理</button>';
   mc.parentNode.insertBefore(tabBar, mc);
 }
 
@@ -1338,13 +1345,16 @@ function switchMode(mode) {
   const mrm = document.getElementById('reminder-panel');
   const cardsArea   = document.getElementById('cards-area');
   const summaryArea = document.getElementById('summary-area');
+  const mam = document.getElementById('addr-mgmt-area');
 
-  if (mc)  mc.style.display  = (mode === 'fax' || mode === 'reminder') ? '' : 'none';
+  if (mc)  mc.style.display  = (mode === 'fax' || mode === 'reminder' || mode === 'addr-mgmt') ? '' : 'none';
   if (mcd) mcd.style.display = mode === 'd' ? '' : 'none';
 
   if (mrm) mrm.style.display = mode === 'reminder' ? '' : 'none';
   const closeBtn = document.getElementById('reminder-close-btn');
   if (closeBtn) closeBtn.style.display = 'none';
+
+  if (mam) mam.style.display = mode === 'addr-mgmt' ? '' : 'none';
 
   // FAX 카드/요약: fax 모드에서만 표시
   if (cardsArea)   cardsArea.style.display   = mode === 'fax' ? '' : 'none';
@@ -1357,8 +1367,8 @@ function switchMode(mode) {
   if (mcc) mcc.style.display = 'none';
 
   // 탭 활성 스타일 (underline 방식)
-  const COLORS = { fax: '#4a90d9', d: '#27ae60', reminder: '#e67e22' };
-  ['fax', 'd', 'reminder'].forEach(function(m) {
+  const COLORS = { fax: '#4a90d9', d: '#27ae60', reminder: '#e67e22', 'addr-mgmt': '#6c3fac' };
+  ['fax', 'd', 'reminder', 'addr-mgmt'].forEach(function(m) {
     const btn = document.getElementById('tab-' + m);
     if (!btn) return;
     const active = (m === mode);
@@ -1366,8 +1376,9 @@ function switchMode(mode) {
     btn.style.color = active ? COLORS[m] : '#555';
   });
 
-  if (mode === 'd')        renderModeD();
-  if (mode === 'reminder') renderReminder();
+  if (mode === 'd')         renderModeD();
+  if (mode === 'reminder')  renderReminder();
+  if (mode === 'addr-mgmt') renderAddrMgmt();
 }
 
 function renderModeB() {
@@ -1753,6 +1764,154 @@ async function renderReminder() {
       ⚠ サーバー接続失敗: ${e.message}<br>
       <span style="color:#888; font-size:11px;">server_phase4.py が起動中か確認してください（ポート 18765）</span>
     </div>`;
+  }
+}
+
+// [PR-ADDR-MGMT 2026-07-01]
+async function renderAddrMgmt() {
+  const area = document.getElementById('addr-mgmt-area');
+  if (!area) return;
+  area.innerHTML = '<div style="text-align:center;color:#888;padding:24px;font-size:12px;">読込中...</div>';
+  try {
+    const r = await fetch('http://192.168.1.34:18765/packer-addresses');
+    const data = await r.json();
+    window._addrMgmtData = data.packers || [];
+    _renderAddrTable('all', '');
+  } catch(e) {
+    area.innerHTML = `<div style="color:#c0392b;padding:12px;font-size:12px;background:#fff5f5;border-radius:4px;">⚠ サーバー接続失敗: ${e.message}</div>`;
+  }
+}
+
+function _renderAddrTable(filterMode, searchText) {
+  const area = document.getElementById('addr-mgmt-area');
+  if (!area) return;
+  const packers = window._addrMgmtData || [];
+  const q = (searchText || '').toLowerCase();
+  const filtered = packers.filter(function(p) {
+    if (filterMode === 'registered' && !p.emails.length) return false;
+    if (filterMode === 'unregistered' && p.emails.length) return false;
+    if (q) {
+      const inCode = p.packer_code.toLowerCase().includes(q);
+      const inEmail = p.emails.some(function(e){ return e.address.toLowerCase().includes(q); });
+      if (!inCode && !inEmail) return false;
+    }
+    return true;
+  });
+
+  const rows = filtered.map(function(p) {
+    const active = p.has_active_booking
+      ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#27ae60;color:#fff;margin-left:4px;">活動中</span>' : '';
+    const emailBadges = p.emails.map(function(e) {
+      const isOverride = e.source === 'override';
+      const bg = isOverride ? '#27ae60' : '#2980b9';
+      const label = isOverride ? '手動' : 'システム';
+      const delBtn = isOverride
+        ? `<button onclick="deleteAddrOverride('${p.packer_code}','${e.address}')"
+             style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:11px;padding:0 2px;margin-left:2px;">✕</button>`
+        : '';
+      return `<span style="display:inline-flex;align-items:center;background:#f0f4ff;border:1px solid #cce;border-radius:12px;padding:2px 8px;margin:2px;font-size:11px;">
+        <span style="font-size:9px;padding:0 4px;border-radius:8px;background:${bg};color:#fff;margin-right:4px;">${label}</span>
+        ${e.address}${delBtn}</span>`;
+    }).join('');
+    const noEmail = !p.emails.length
+      ? '<span style="font-size:11px;color:#aaa;">（未登録）</span>' : emailBadges;
+    return `<tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:8px 12px;font-size:12px;white-space:nowrap;font-weight:600;">${p.packer_code}${active}</td>
+      <td style="padding:8px 12px;font-size:12px;">${noEmail}</td>
+      <td style="padding:8px 6px;white-space:nowrap;">
+        <button onclick="showAddrAddForm('${p.packer_code}')"
+          style="font-size:11px;padding:3px 10px;border:1px solid #6c3fac;border-radius:4px;background:#fff;color:#6c3fac;cursor:pointer;">＋ 追加</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  area.innerHTML = `
+<div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+  <div style="display:flex;gap:4px;">
+    ${['all','registered','unregistered'].map(function(m){
+      const labels = {all:'全て', registered:'登録済み', unregistered:'未登録'};
+      const active = m === filterMode;
+      return `<button onclick="_renderAddrTable('${m}', document.getElementById('addr-search-input').value)"
+        style="font-size:11px;padding:3px 10px;border:1px solid #6c3fac;border-radius:4px;
+               background:${active?'#6c3fac':'#fff'};color:${active?'#fff':'#6c3fac'};cursor:pointer;">
+        ${labels[m]}</button>`;
+    }).join('')}
+  </div>
+  <input id="addr-search-input" type="text" placeholder="PACKER / メール検索" value="${searchText}"
+    oninput="_filterAddrSearch('${filterMode}')"
+    style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;width:200px;">
+  <span style="font-size:11px;color:#888;">${filtered.length}件</span>
+</div>
+<div id="addr-add-form-area"></div>
+<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+  <thead>
+    <tr style="background:#f5f0ff;font-size:12px;color:#555;">
+      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;">PACKER</th>
+      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e0d8f0;">登録メール</th>
+      <th style="padding:8px 12px;border-bottom:1px solid #e0d8f0;"></th>
+    </tr>
+  </thead>
+  <tbody>${rows || '<tr><td colspan="3" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">該当なし</td></tr>'}</tbody>
+</table>`;
+}
+
+function _filterAddrSearch(filterMode) {
+  const q = document.getElementById('addr-search-input').value;
+  _renderAddrTable(filterMode, q);
+}
+
+function showAddrAddForm(packerCode) {
+  const formArea = document.getElementById('addr-add-form-area');
+  if (!formArea) return;
+  formArea.innerHTML = `
+<div style="background:#f5f0ff;border:1px solid #c9b8f0;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+  <span style="font-size:12px;font-weight:600;color:#6c3fac;">${packerCode} にメール追加:</span>
+  <input id="addr-new-input" type="email" placeholder="example@company.co.jp"
+    style="font-size:12px;padding:4px 8px;border:1px solid #c9b8f0;border-radius:4px;width:240px;">
+  <button onclick="addAddrOverride('${packerCode}')"
+    style="font-size:12px;padding:4px 12px;border:1px solid #6c3fac;border-radius:4px;background:#6c3fac;color:#fff;cursor:pointer;">追加</button>
+  <button onclick="document.getElementById('addr-add-form-area').innerHTML=''"
+    style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#888;cursor:pointer;">キャンセル</button>
+</div>`;
+  document.getElementById('addr-new-input').focus();
+}
+
+async function addAddrOverride(packerCode) {
+  const input = document.getElementById('addr-new-input');
+  if (!input) return;
+  const address = input.value.trim().toLowerCase();
+  if (!address || !address.includes('@')) { alert('正しいメールアドレスを入力してください'); return; }
+  try {
+    const r = await fetch('http://192.168.1.34:18765/packer-address-override', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packer_code: packerCode, address: address }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      await renderAddrMgmt();
+    } else {
+      alert('追加失敗: ' + (data.msg || '不明'));
+    }
+  } catch(e) {
+    alert('サーバー接続失敗: ' + e.message);
+  }
+}
+
+async function deleteAddrOverride(packerCode, address) {
+  if (!confirm(`【${packerCode}】\n${address} を削除しますか？`)) return;
+  try {
+    const r = await fetch('http://192.168.1.34:18765/packer-address-override', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packer_code: packerCode, address: address }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      await renderAddrMgmt();
+    }
+  } catch(e) {
+    alert('サーバー接続失敗: ' + e.message);
   }
 }
 
