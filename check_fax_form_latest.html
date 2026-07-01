@@ -6,9 +6,12 @@
 <title>FAX搬入票確認 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-size: 13px; background: #f5f5f5; color: #333; padding: 20px; }
-.page-header { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; border: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; }
-.page-header h1 { font-size: 16px; font-weight: 600; color: #222; }
+body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
+.page-header { background: #fff; padding: 14px 20px 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+.page-header h1 { font-size: 20px; font-weight: 700; color: #2c3e50; letter-spacing: -0.3px; }
+/* [PR-UI-REDESIGN 2026-07-01] */
+#tab-bar-area { background: #fff; padding: 0 20px; border-bottom: 1px solid #e0e0e0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 16px 20px; margin-bottom: 10px; }
 .page-header .meta { font-size: 11px; color: #888; text-align: right; line-height: 1.6; }
 .badges { display: flex; gap: 6px; margin-top: 6px; }
 .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
@@ -99,7 +102,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 <!-- ログインゲート -->
 <div id="login-gate" class="login-gate">
   <div class="login-box">
-    <h2>🔐 LEENAI FAX 搬入票確認</h2>
+    <h2>🔐 写真／搬入票確認TOOL</h2>
     <p>会社アカウント (Outlook) でサインインしてください。<br>サインイン後、確認フォームが表示されます。</p>
     <button class="btn-login" onclick="login()">🔑 Outlookでログイン</button>
   </div>
@@ -110,7 +113,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
 
 <div class="page-header">
   <div>
-    <h1>FAX 搬入票確認フォーム <span style='font-size:13px;color:#888;font-weight:normal;'>v3.9</span></h1>
+    <h1>写真／搬入票確認TOOL</h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -128,11 +131,7 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
                background:#6a1b9a; color:#fff; cursor:pointer; margin-right:4px;">
         📊 実況表 UPDATE
       </button>
-      <button id="btn-reminder-toggle" onclick="toggleReminderPanel()"
-        style="font-size:11px; padding:3px 10px; border:1px solid #e67e22; border-radius:4px;
-               background:#e67e22; color:#fff; cursor:pointer; margin-right:4px;">
-        ✉ リマインダー
-      </button>
+
       <button id="btn-update-fax" onclick="_triggerNotifyUpdate('btn-update-fax')"
         style="font-size:11px; padding:3px 10px; border:1px solid #1976d2; border-radius:4px;
                background:#1976d2; color:#fff; cursor:pointer; margin-right:4px;">
@@ -140,15 +139,15 @@ body { font-family: 'Meiryo', 'メイリオ', 'MS PGothic', sans-serif; font-siz
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:22</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:29</div>
   </div>
 </div>
 
 <!-- ✉ リマインダー パネル [2026-06-29] -->
-<div id="reminder-panel" style="display:none; margin-top:16px; background:#fff; border:1px solid #e67e22; border-radius:8px; padding:16px 20px;">
+<div id="reminder-panel" style="display:none; margin-top:0; background:#fff; padding:16px 0;">
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
     <div style="font-size:14px; font-weight:600; color:#e67e22;">✉ リマインダー メール 送信</div>
-    <button onclick="toggleReminderPanel()" style="font-size:11px; padding:2px 8px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer;">✕ 閉じる</button>
+    <span id="reminder-close-btn" style="display:none;"></span>
   </div>
   <div id="reminder-meta" style="font-size:11px; color:#888; margin-bottom:12px;"></div>
   <div id="reminder-cards"></div>
@@ -1238,7 +1237,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:22</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:29</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1295,12 +1294,22 @@ function initTabs() {
   const mc = document.getElementById('main-content');
   if (!mc) return;
   const tabBar = document.createElement('div');
-  tabBar.style.cssText = 'display:flex;gap:8px;margin-top:12px;margin-bottom:8px;';
+  tabBar.style.cssText = 'display:flex; gap:0; margin-top:16px; margin-bottom:0; border-bottom:2px solid #e0e0e0;';
   tabBar.innerHTML =
-    '<button id="tab-fax" onclick="switchMode(\'fax\')" style="font-size:12px;padding:3px 12px;border:1px solid #4a90d9;border-radius:4px;background:#4a90d9;color:#fff;cursor:pointer;font-weight:bold;">FAX 確認</button>' +
-    '<button id="tab-d" onclick="switchMode(\'d\')" style="font-size:12px;padding:3px 12px;border:1px solid #27ae60;border-radius:4px;background:#27ae60;color:#fff;cursor:pointer;font-weight:bold;">搬入票 確認</button>' +
-    '<button id="tab-b" onclick="switchMode(\'b\')" style="font-size:12px;padding:3px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#333;cursor:pointer;">반입표 Warning</button>' +
-    '<button id="tab-c" class="tab-btn" onclick="switchMode(\'c\')">📁 未分類写真</button>';
+    '<button id="tab-fax" onclick="switchMode(\'fax\')"' +
+    ' style="font-size:13px;padding:8px 20px;border:none;border-bottom:3px solid transparent;' +
+    ' background:none;color:#555;cursor:pointer;font-weight:600;margin-bottom:-2px;' +
+    ' transition:color .15s,border-color .15s;">📄 FAX 確認</button>' +
+
+    '<button id="tab-d" onclick="switchMode(\'d\')"' +
+    ' style="font-size:13px;padding:8px 20px;border:none;border-bottom:3px solid transparent;' +
+    ' background:none;color:#555;cursor:pointer;font-weight:600;margin-bottom:-2px;' +
+    ' transition:color .15s,border-color .15s;">📋 搬入票確認</button>' +
+
+    '<button id="tab-reminder" onclick="switchMode(\'reminder\')"' +
+    ' style="font-size:13px;padding:8px 20px;border:none;border-bottom:3px solid transparent;' +
+    ' background:none;color:#555;cursor:pointer;font-weight:600;margin-bottom:-2px;' +
+    ' transition:color .15s,border-color .15s;">✉ リマインダー</button>';
   mc.parentNode.insertBefore(tabBar, mc);
 }
 
@@ -1323,25 +1332,36 @@ function initTabs() {
 })();
 
 function switchMode(mode) {
-  const mc  = document.getElementById('main-content');
+  // 콘텐츠 영역 표시 제어
+  const mc  = document.getElementById('main-content');    // fax
+  const mcd = document.getElementById('mode-d-area');     // d
+  const mrm = document.getElementById('reminder-panel');  // reminder
+  if (mc)  mc.style.display  = mode === 'fax'      ? '' : 'none';
+  if (mcd) mcd.style.display = mode === 'd'        ? '' : 'none';
+  if (mrm) {
+    mrm.style.display = mode === 'reminder' ? '' : 'none';
+    const closeBtn = document.getElementById('reminder-close-btn');
+    if (closeBtn) closeBtn.style.display = 'none';
+  }
+
+  // mode-b / mode-c 는 탭에서 제거했으나 DOM은 유지 (display:none)
   const mb  = document.getElementById('mode-b-area');
   const mcc = document.getElementById('mode-c-area');
-  const mcd = document.getElementById('mode-d-area');
-  if (mc)  mc.style.display  = mode === 'fax' ? '' : 'none';
-  if (mb)  mb.style.display  = mode === 'b'   ? '' : 'none';
-  if (mcc) mcc.style.display = mode === 'c'   ? '' : 'none';
-  if (mcd) mcd.style.display = mode === 'd'   ? '' : 'none';
-  const tf = document.getElementById('tab-fax');
-  const tb = document.getElementById('tab-b');
-  const tc = document.getElementById('tab-c');
-  const td = document.getElementById('tab-d');
-  if (tf) { tf.style.background = mode==='fax'?'#4a90d9':'#fff'; tf.style.color = mode==='fax'?'#fff':'#333'; }
-  if (tb) { tb.style.background = mode==='b'  ?'#4a90d9':'#fff'; tb.style.color = mode==='b'  ?'#fff':'#333'; }
-  if (tc) { tc.style.background = mode==='c'  ?'#4a90d9':'#fff'; tc.style.color = mode==='c'  ?'#fff':'#333'; }
-  if (td) { td.style.background = mode==='d'  ?'#27ae60':'#fff'; td.style.color = mode==='d'  ?'#fff':'#27ae60'; if (td) td.style.borderColor = '#27ae60'; }
-  if (mode === 'b') renderModeB();
-  if (mode === 'c') renderModeCCards();
-  if (mode === 'd') renderModeD();
+  if (mb)  mb.style.display  = 'none';
+  if (mcc) mcc.style.display = 'none';
+
+  // 탭 활성 스타일 (underline 방식)
+  const COLORS = { fax: '#4a90d9', d: '#27ae60', reminder: '#e67e22' };
+  ['fax', 'd', 'reminder'].forEach(function(m) {
+    const btn = document.getElementById('tab-' + m);
+    if (!btn) return;
+    const active = (m === mode);
+    btn.style.borderBottomColor = active ? COLORS[m] : 'transparent';
+    btn.style.color = active ? COLORS[m] : '#555';
+  });
+
+  if (mode === 'd')        renderModeD();
+  if (mode === 'reminder') renderReminder();
 }
 
 function renderModeB() {
