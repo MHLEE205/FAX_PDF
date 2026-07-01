@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:08</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:28</div>
   </div>
 </div>
 
@@ -1239,7 +1239,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:08</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 14:28</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1803,12 +1803,25 @@ function _renderAddrTable(filterMode, searchText) {
     const active = p.has_active_booking
       ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#27ae60;color:#fff;margin-left:4px;">活動中</span>' : '';
 
-    // システム登録メール (読み取り専用)
+    // システム登録メール + 停止/再開トグル
     const sysEmails = p.emails.filter(function(e){ return e.source === 'system'; });
     const sysCol = sysEmails.length
       ? sysEmails.map(function(e){
-          return `<div style="display:inline-flex;align-items:center;background:#e8f0fe;border:1px solid #aac4f0;border-radius:12px;padding:3px 10px;margin:2px 2px;font-size:11px;color:#1a56a0;">
-            📧 ${e.address}</div>`;
+          const dis = e.is_disabled;
+          const chipStyle = dis
+            ? 'background:#f0f0f0;border:1px solid #ccc;color:#aaa;text-decoration:line-through;'
+            : 'background:#e8f0fe;border:1px solid #aac4f0;color:#1a56a0;';
+          const btnStyle = dis
+            ? 'font-size:10px;padding:1px 6px;border:1px solid #27ae60;border-radius:8px;background:#fff;color:#27ae60;cursor:pointer;margin-left:6px;white-space:nowrap;'
+            : 'font-size:10px;padding:1px 6px;border:1px solid #e67e22;border-radius:8px;background:#fff;color:#e67e22;cursor:pointer;margin-left:6px;white-space:nowrap;';
+          const btnLabel = dis ? '再開' : '停止';
+          const btnFn = dis
+            ? `enableAddr('${p.packer_code}','${e.address}')`
+            : `disableAddr('${p.packer_code}','${e.address}')`;
+          return `<div style="display:inline-flex;align-items:center;${chipStyle}border-radius:12px;padding:3px 8px;margin:2px 2px;font-size:11px;">
+            ${dis ? '🚫' : '📧'} ${e.address}
+            <button onclick="${btnFn}" style="${btnStyle}">${btnLabel}</button>
+          </div>`;
         }).join('')
       : '<span style="font-size:11px;color:#bbb;font-style:italic;">（未登録）</span>';
 
@@ -1892,6 +1905,29 @@ async function addAddrOverride(packerCode, inputId) {
   } catch(e) {
     alert('サーバー接続失敗: ' + e.message);
   }
+}
+
+async function disableAddr(packerCode, address) {
+  if (!confirm(`【${packerCode}】\n${address}\nへのリマインダー送信を停止しますか？`)) return;
+  try {
+    const r = await fetch('http://192.168.1.34:18765/packer-address-disable', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packer_code: packerCode, address: address }),
+    });
+    if ((await r.json()).ok) await renderAddrMgmt();
+  } catch(e) { alert('サーバー接続失敗: ' + e.message); }
+}
+
+async function enableAddr(packerCode, address) {
+  try {
+    const r = await fetch('http://192.168.1.34:18765/packer-address-disable', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packer_code: packerCode, address: address }),
+    });
+    if ((await r.json()).ok) await renderAddrMgmt();
+  } catch(e) { alert('サーバー接続失敗: ' + e.message); }
 }
 
 async function deleteAddrOverride(packerCode, address) {
