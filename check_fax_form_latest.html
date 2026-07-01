@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:29</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:36</div>
   </div>
 </div>
 
@@ -1237,7 +1237,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:29</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-01 10:36</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1332,19 +1332,25 @@ function initTabs() {
 })();
 
 function switchMode(mode) {
-  // 콘텐츠 영역 표시 제어
-  const mc  = document.getElementById('main-content');    // fax
-  const mcd = document.getElementById('mode-d-area');     // d
-  const mrm = document.getElementById('reminder-panel');  // reminder
-  if (mc)  mc.style.display  = mode === 'fax'      ? '' : 'none';
-  if (mcd) mcd.style.display = mode === 'd'        ? '' : 'none';
-  if (mrm) {
-    mrm.style.display = mode === 'reminder' ? '' : 'none';
-    const closeBtn = document.getElementById('reminder-close-btn');
-    if (closeBtn) closeBtn.style.display = 'none';
-  }
+  // reminder-panel は main-content の子要素のため、reminder 모드에서도 main-content를 표시
+  const mc  = document.getElementById('main-content');
+  const mcd = document.getElementById('mode-d-area');
+  const mrm = document.getElementById('reminder-panel');
+  const cardsArea   = document.getElementById('cards-area');
+  const summaryArea = document.getElementById('summary-area');
 
-  // mode-b / mode-c 는 탭에서 제거했으나 DOM은 유지 (display:none)
+  if (mc)  mc.style.display  = (mode === 'fax' || mode === 'reminder') ? '' : 'none';
+  if (mcd) mcd.style.display = mode === 'd' ? '' : 'none';
+
+  if (mrm) mrm.style.display = mode === 'reminder' ? '' : 'none';
+  const closeBtn = document.getElementById('reminder-close-btn');
+  if (closeBtn) closeBtn.style.display = 'none';
+
+  // FAX 카드/요약: fax 모드에서만 표시
+  if (cardsArea)   cardsArea.style.display   = mode === 'fax' ? '' : 'none';
+  if (summaryArea) summaryArea.style.display = mode === 'fax' ? '' : 'none';
+
+  // mode-b / mode-c DOM 유지 (display:none)
   const mb  = document.getElementById('mode-b-area');
   const mcc = document.getElementById('mode-c-area');
   if (mb)  mb.style.display  = 'none';
