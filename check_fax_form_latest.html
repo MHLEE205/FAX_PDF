@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v4.0 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v4.1 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-03 13:39</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-03 13:43</div>
   </div>
 </div>
 
@@ -455,8 +455,47 @@ async function _doConfirmHannyuhyoCard(idx) {
     confirmed_by: userName||'', confirmed_cts: confirmedCts };
   const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED',`hannyuhyo_confirmed_${ts}.json`];
   await _uploadJsonToPath(pathSegs, payload, token);
-  document.getElementById('md-done-'+idx).textContent = '✅ 送信済み';
+  const _doneEl = document.getElementById('md-done-'+idx);
+  _doneEl.textContent = '📤 送信済み — ⏳ 반영 확인 중...';
   document.getElementById('md-card-'+idx).classList.add('done');
+  _pollCtStatus(idx, item.iv_no, confirmedCts, Date.now());
+}
+async function _pollCtStatus(idx, ivNo, confirmedCts, startTime) {
+  const LAN    = 'http://192.168.1.34:18765';
+  const doneEl = document.getElementById('md-done-' + idx);
+  const ctNos  = confirmedCts.map(c => c.ct_no).filter(Boolean);
+  if (!ctNos.length) return;
+  const MAX_MS = 90000;
+  const check  = async () => {
+    const elapsed = Date.now() - startTime;
+    if (elapsed > MAX_MS) {
+      doneEl.textContent = '⚠ 未反映 (90秒超過) — watcher 확인 필요';
+      doneEl.style.background = '#c0392b';
+      return;
+    }
+    try {
+      const params = ctNos.map(c => 'ct_no=' + encodeURIComponent(c)).join('&');
+      const r = await fetch(LAN + '/ct-status?iv_no=' + encodeURIComponent(ivNo) + '&' + params,
+                            { signal: AbortSignal.timeout(4000) });
+      if (!r.ok) throw new Error('server_err');
+      const data = await r.json();
+      if (data.all_confirmed) {
+        const secs = Math.round(elapsed / 1000);
+        doneEl.textContent = '✅ 반영 완료 (' + secs + '秒)';
+        doneEl.style.background = '#1a8754';
+        return;
+      }
+      const done    = (data.cts || []).filter(c => c.human_confirmed).length;
+      const total   = ctNos.length;
+      const secLeft = Math.round((MAX_MS - elapsed) / 1000);
+      doneEl.textContent = '⏳ 반영 확인 중 ' + done + '/' + total + '件 (' + secLeft + '秒残)';
+    } catch(e) {
+      doneEl.textContent = '✅ 送信済み (LAN外 — 반영 확인 불가)';
+      return;
+    }
+    setTimeout(check, 3000);
+  };
+  setTimeout(check, 3000);
 }
 async function sendAll() {
   const btn  = document.getElementById('btn-send-all');
@@ -1254,7 +1293,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-03 13:39</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-03 13:43</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
