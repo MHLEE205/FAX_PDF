@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-03 19:15</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-04 08:06</div>
   </div>
 </div>
 
@@ -273,7 +273,22 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {};
+const CONFIRMED_DATA = {
+  "20260703210627-0001.pdf": {
+    "status": "未確認",
+    "fax_file": "20260703210627-0001.pdf",
+    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - -. 古紙書類\\▲ LEENAI 通関作業中\\PHOTO\\_FAX\\_CHECK_FAX\\20260703210627-0001.pdf",
+    "failure_type": "OCR完全失敗",
+    "packer_estimate": null,
+    "ocr_bkg": [],
+    "ocr_ct": [],
+    "received_at": "2026-07-03T21:06:27+09:00",
+    "detail": "OCR完全失敗",
+    "generated_at": "2026-07-03T23:06:18.304534+00:00",
+    "human_input": {},
+    "confirmed_at": null
+  }
+};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
@@ -1278,7 +1293,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-03 19:15</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-04 08:06</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1299,7 +1314,7 @@ init();
 <script>
 // [PR-HANNYUHYO-VISIBILITY 2026-05-27 작업 D-2]: 모드 B 데이터 + 함수
 const REVIEW_DATA = {};
-const NEEDS_REVIEW_DATA = {"items": [{"type": "root_needs_review", "iv_no": null, "ct_no": "_FUJI_NO_BKG", "packer": null, "email_dir": null, "created_at": null, "photos": []}], "active_ivs": ["LEENAI_FIX", "NA2606-03", "NA2606-12", "NA2606-14", "NA2606-17", "NA2606-18", "NA2606-19", "NA2606-20", "NA2606-22", "NA2606-23", "NA2607-01", "NAS2606-22", "NAS2607-01", "NAS2607-02", "NAS2607-03", "NCA2606-04", "NCL2607-02", "NCL2607-03", "NCV2607-01", "NCV2607-02", "NCV2607-03", "NDW2607-01", "NHA2606-33", "NHA2607-01", "NHA2607-02", "NHS2606-03", "NHS2607-01", "NJJ2606-09", "NJJ2606-11", "NJJ2606-12", "NJJ2606-13", "NJJ2606-23", "NJJ2607-01", "NJJ2607-02", "NJJ2607-03", "NJJ2607-04", "NJJ2607-21", "NJS2606-01", "NMG2606-10", "NMG2606-21", "NMG2606-22", "NMG2606-23", "NMG2606-24", "NNC2605-03", "NNE2607-01", "NNE2607-21", "NNT2606-02", "NNT2606-03", "NRE2607-01", "NSG2606-23", "NSG2607-04", "NSG2607-05", "NSG2607-21", "NTA2607-01", "NTA2607-02", "NTH2607-21", "NTQ2604-03", "NVD2604-02", "NVD2604-03", "UYC2607-01"]};
+const NEEDS_REVIEW_DATA = {"items": [{"type": "root_needs_review", "iv_no": null, "ct_no": "_FUJI_NO_BKG", "packer": null, "email_dir": null, "created_at": null, "photos": []}], "active_ivs": ["LEENAI_FIX", "NA2606-14", "NA2606-20", "NA2606-22", "NA2606-23", "NA2607-01", "NAS2606-22", "NAS2607-01", "NAS2607-02", "NAS2607-03", "NCA2606-04", "NCL2607-02", "NCL2607-03", "NCV2607-01", "NCV2607-02", "NCV2607-03", "NDW2607-01", "NHA2606-33", "NHA2607-02", "NHS2606-03", "NHS2607-01", "NJJ2606-11", "NJJ2606-12", "NJJ2606-13", "NJJ2607-01", "NJJ2607-02", "NJJ2607-03", "NJJ2607-04", "NJJ2607-21", "NJS2606-01", "NMG2606-10", "NMG2606-22", "NMG2606-23", "NMG2606-24", "NNC2605-03", "NNE2607-01", "NNT2606-02", "NNT2606-03", "NRE2607-01", "NSG2606-23", "NSG2607-04", "NTA2607-01", "NTA2607-02", "NTH2607-21", "NTQ2604-03", "NVD2604-02", "NVD2604-03", "UYC2607-01"]};
 const CHECK_PHOTO_DATA  = [];
 // [PR-HANNYUHYO-CARD-B 2026-06-15]
 const PENDING_HANNYUHYO_DATA = [];
