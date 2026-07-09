@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v4.6 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v4.7 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v4.6</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v4.7</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -1834,6 +1834,8 @@ async function renderReminder() {
     <span style="font-weight:600; font-size:13px;">${t.iv_no}</span>
     <span style="font-size:11px; color:#555;">${t.packer_name || t.packer_code}</span>
     <span style="font-size:11px; color:#aaa;">CUT: ${t.cy_cut}</span>
+    ${t.stage === 'workdate_passed' && t.work_dates && t.work_dates.length > 0
+      ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;margin-left:4px;">作業日: ${t.work_dates.join(', ')}</span>` : ''}
     ${sent ? '<span style="font-size:11px;color:#27ae60;margin-left:auto;">✓ 送信済</span>' : ''}
   </div>
   <div style="font-size:11px; color:#666; margin-bottom:4px;">未着写真: <b>${t.missing_photo}</b>CT &nbsp;|&nbsp; 未着搬入票: <b>${t.missing_hannyuhyo}</b>CT</div>
