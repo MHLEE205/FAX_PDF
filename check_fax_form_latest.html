@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-12 19:07</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-12 19:27</div>
   </div>
 </div>
 
@@ -308,7 +308,7 @@ function updateMdPlantField(idx, ci) {
     }).join('');
     fieldDiv.innerHTML = `<select id="md-plant-${idx}-${ci}" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">${opts}</select>`;
   } else {
-    fieldDiv.innerHTML = `<input id="md-plant-${idx}-${ci}" value="${curPlant}" placeholder="예: ナガイ(みよし)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">`;
+    fieldDiv.innerHTML = `<input id="md-plant-${idx}-${ci}" value="${curPlant}" placeholder="例: ナガイ(みよし)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">`;
   }
 }
 
@@ -451,7 +451,7 @@ async function _doConfirmHannyuhyoCard(idx) {
         signal: AbortSignal.timeout(3000) });
   } catch(e) { /* LAN 밖 또는 서버 미기동 — 무시 */ }
   const _doneEl = document.getElementById('md-done-'+idx);
-  _doneEl.textContent = '📤 送信済み — ⏳ 반영 확인 중...';
+  _doneEl.textContent = '📤 送信済み — ⏳ 反映確認中...';
   document.getElementById('md-card-'+idx).classList.add('done');
   _pollCtStatus(idx, item.iv_no, confirmedCts, Date.now());
 }
@@ -464,7 +464,7 @@ async function _pollCtStatus(idx, ivNo, confirmedCts, startTime) {
   const check  = async () => {
     const elapsed = Date.now() - startTime;
     if (elapsed > MAX_MS) {
-      doneEl.textContent = '⚠ 未反映 (90秒超過) — watcher 확인 필요';
+      doneEl.textContent = '⚠ 未反映 (90秒超過) — watcher確認要';
       doneEl.style.background = '#c0392b';
       return;
     }
@@ -476,16 +476,16 @@ async function _pollCtStatus(idx, ivNo, confirmedCts, startTime) {
       const data = await r.json();
       if (data.all_confirmed) {
         const secs = Math.round(elapsed / 1000);
-        doneEl.textContent = '✅ 반영 완료 (' + secs + '秒)';
+        doneEl.textContent = '✅ 反映完了 (' + secs + '秒)';
         doneEl.style.background = '#1a8754';
         return;
       }
       const done    = (data.cts || []).filter(c => c.human_confirmed).length;
       const total   = ctNos.length;
       const secLeft = Math.round((MAX_MS - elapsed) / 1000);
-      doneEl.textContent = '⏳ 반영 확인 중 ' + done + '/' + total + '件 (' + secLeft + '秒残)';
+      doneEl.textContent = '⏳ 反映確認中 ' + done + '/' + total + '件 (' + secLeft + '秒残)';
     } catch(e) {
-      doneEl.textContent = '✅ 送信済み (LAN外 — 반영 확인 불가)';
+      doneEl.textContent = '✅ 送信済み (LAN外 — 反映確認不可)';
       return;
     }
     setTimeout(check, 3000);
@@ -569,7 +569,7 @@ async function submitBkgReassign(idx, oldIvNo, pdfNames, pdfPaths) {
   const tw    = document.getElementById(`bkg-reassign-tw-${idx}`).value.trim();
   const gw    = document.getElementById(`bkg-reassign-gw-${idx}`).value.trim();
   const bales = document.getElementById(`bkg-reassign-bales-${idx}`).value.trim();
-  if (!bkgNo||!ctNo){alert("BKG 번호와 CT 번호는 필수입니다.");return;}
+  if (!bkgNo||!ctNo){alert("BKGおよびCT番号は必須です。");return;}
   if (!token){alert('認証が必要です');return;}
   const now=new Date();const pad=n=>String(n).padStart(2,'0');
   const ts=`${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
@@ -1143,10 +1143,10 @@ function buildModeCCard(item, idx, activeIvs) {
     const photoHtml = allPhotos.length
         ? allPhotos.slice(0, 10).map(p => `<span class="mc-photo-chip">${p}</span>`).join('')
           + (allPhotos.length > 10 ? `<span class="mc-photo-chip">外 ${allPhotos.length - 10}枚</span>` : '')
-        : '<span style="font-size:11px;color:#aaa;">사진 파일명 정보 없음</span>';
+        : '<span style="font-size:11px;color:#aaa;">写真ファイル名情報なし</span>';
 
     const ivOptions = (isRoot ? [''].concat(activeIvs) : activeIvs)
-        .map(iv => `<option value="${iv}"${(!isRoot && iv === item.iv_no) ? ' selected' : ''}>${iv || '-- IV 선택 --'}</option>`)
+        .map(iv => `<option value="${iv}"${(!isRoot && iv === item.iv_no) ? ' selected' : ''}>${iv || '-- IV 選択 --'}</option>`)
         .join('');
 
     const defaultCt = isRoot ? (item.ct_no || '') : '';
@@ -1271,7 +1271,7 @@ init();
 <!-- [PR-HANNYUHYO-VISIBILITY 2026-05-27 작업 D-2]: 모드 B — 반입표 warning 확인 -->
 <div id="mode-b-area" style="display:none; margin-top:16px;">
   <div class="page-header">
-    <h1>반입표 Warning 확인 <span style='font-size:13px;color:#888;font-weight:normal;'>모드 B</span></h1>
+    <h1>搬入票 Warning 確認 <span style='font-size:13px;color:#888;font-weight:normal;'>モード B</span></h1>
     <div class="meta" id="mode-b-meta"></div>
   </div>
   <div id="mode-b-cards" style="margin-top:12px;"></div>
@@ -1281,7 +1281,7 @@ init();
 <!-- [PR-HANNYUHYO-CARD-B 2026-06-15]: 모드 D — 搬入票/ 대기 PDF 확인 -->
 <div id="mode-d-area" style="display:none; margin-top:16px;">
   <div class="page-header">
-    <h1>搬入票 確認 <span style='font-size:13px;color:#888;font-weight:normal;'>모드 D</span></h1>
+    <h1>搬入票 確認 <span style='font-size:13px;color:#888;font-weight:normal;'>モード D</span></h1>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
       <div style="display:flex; align-items:center; gap:8px;">
         <div class="meta" id="mode-d-meta"></div>
@@ -1301,7 +1301,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-12 19:07</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-12 19:27</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1311,6 +1311,20 @@ init();
       ⚠ 再確認CT — 値を確認・修正後、確認OKを押してください
     </div>
     <div id="recheck-ct-cards"></div>
+  </div>
+  <!-- 対象外処理済み搬入票 섹션 -->
+  <div id="unmatched-pdf-section" style="margin-top:24px;display:none;">
+    <div style="font-size:14px;font-weight:700;color:#e65100;margin-bottom:8px;">
+      🚫 対象外処理済み搬入票 — _unmatched/ に移動済み
+    </div>
+    <div id="unmatched-pdf-cards"></div>
+  </div>
+  <!-- 搬入票未着 섹션 -->
+  <div id="missing-hannyuhyo-section" style="margin-top:24px;display:none;">
+    <div style="font-size:14px;font-weight:700;color:#7b1fa2;margin-bottom:8px;">
+      📭 搬入票 未着
+    </div>
+    <div id="missing-hannyuhyo-cards"></div>
   </div>
   <div class="footer" style="margin-top:12px;">🤖 このフォームはAIが自動生成しています。&nbsp;<strong>✦ Powered by LEENAI Automation System</strong></div>
 </div>
@@ -1329,6 +1343,9 @@ const PENDING_HANNYUHYO_DATA = [{"iv_no": "NHS2607-01", "bkg_no": "HASLJ01260601
 const RECHECK_CT_DATA = [{"iv_no": "NCL2607-04", "cy_cut": "2026-07-15", "bkg_no": "JJCNATALNA67A13", "cts": [{"ct_no": "TWCU8242342", "packer": "FUJI", "seal_from_pdf": "SJJB642362", "n_w": 22950, "t_w": 3700, "g_w": null, "bales": 21, "work_date": "2026-07-10", "hannyuhyo_pdf_name": "", "hannyuhyo_pdf_subdir": "", "keisho_photos": ["C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NCL2607-04\\TWCU8242342\\622112136037925141.jpg"], "keisho_photo_name": "", "keisho_photo_labels": {"C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NCL2607-04\\TWCU8242342\\622112136037925141.jpg": "計量書"}}]}, {"iv_no": "NCV2607-22", "cy_cut": "2026-07-16", "bkg_no": "272388746", "cts": [{"ct_no": "CAAU7128137", "packer": "UBUKATA", "seal_from_pdf": "ML-JP0149553", "n_w": null, "t_w": 3700, "g_w": null, "bales": null, "work_date": "2026-07-11", "hannyuhyo_pdf_name": "", "hannyuhyo_pdf_subdir": "", "keisho_photos": [], "keisho_photo_name": "", "keisho_photo_labels": {}}]}, {"iv_no": "NNE2607-02", "cy_cut": "2026-07-21", "bkg_no": "JJCOSSGJNA67A02", "cts": [{"ct_no": "UETU5769330", "packer": "KINOSHITA", "seal_from_pdf": "SJJD245948", "n_w": null, "t_w": null, "g_w": null, "bales": null, "work_date": "2026-07-11", "hannyuhyo_pdf_name": "", "hannyuhyo_pdf_subdir": "", "keisho_photos": [], "keisho_photo_name": "", "keisho_photo_labels": {}}]}];
 // [PR-UNRECEIVED-ALERT 2026-06-24]
 const UNRECEIVED_ALERT_DATA = [];
+// 対象外処理済み搬入票 + 搬入票未着
+const UNMATCHED_PDF_DATA    = [{"iv_no": "NCV2607-22", "bkg_no": "272388746", "cy_cut": "2026-07-16", "pdf_names": ["20260711140309-0001.pdf"]}];
+const MISSING_HANNYUHYO_DATA = [{"iv_no": "NCL2607-04", "bkg_no": "JJCNATALNA67A13", "cy_cut": "2026-07-15", "cts": [{"ct_no": "TWCU8242342", "packer": "FUJI"}]}, {"iv_no": "NCV2607-22", "bkg_no": "272388746", "cy_cut": "2026-07-16", "cts": [{"ct_no": "CAAU7128137", "packer": "UBUKATA"}]}, {"iv_no": "NJJ2607-03", "bkg_no": "HASLJ01260600191", "cy_cut": "2026-07-17", "cts": [{"ct_no": "SKHU9309550", "packer": "DAIWA"}, {"ct_no": "SKHU9903412", "packer": "DAIWA"}]}, {"iv_no": "NNE2607-02", "bkg_no": "JJCOSSGJNA67A02", "cy_cut": "2026-07-21", "cts": [{"ct_no": "UETU5769330", "packer": "KINOSHITA"}]}];
 
 // [PR-UNRECEIVED-ALERT 2026-06-24]
 function renderUnreceivedAlert() {
@@ -1455,7 +1472,7 @@ function renderModeB() {
     });
   });
   if (!items.length) {
-    area.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">확인 필요 항목이 없습니다.</div>';
+    area.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">確認要項目なし</div>';
     return;
   }
   area.innerHTML = items.map(function(item, i) {
@@ -1466,10 +1483,10 @@ function renderModeB() {
       '<div style="font-size:12px;font-weight:600;margin-bottom:4px;">' + item.iv_no + ' / ' + item.ct_no + '</div>' +
       '<div style="font-size:11px;color:#888;margin-bottom:8px;">' + item.detail + '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
-        '<div class="field"><label>수정 필드명</label><input id="mb-field-' + i + '" placeholder="seal_no / t_w" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;width:100%;"></div>' +
-        '<div class="field"><label>수정값</label><input id="mb-val-' + i + '" placeholder="JPE913004" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;width:100%;"></div>' +
+        '<div class="field"><label>修正フィールド名</label><input id="mb-field-' + i + '" placeholder="seal_no / t_w" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;width:100%;"></div>' +
+        '<div class="field"><label>修正値</label><input id="mb-val-' + i + '" placeholder="JPE913004" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px;width:100%;"></div>' +
       '</div>' +
-      '<button onclick="copyMbCmd(' + i + ',\'' + ivEsc + '\',\'' + ctEsc + '\',\'' + dtEsc + '\',this)" style="font-size:12px;padding:4px 12px;border:1px solid #4a90d9;border-radius:4px;background:#4a90d9;color:#fff;cursor:pointer;">📋 명령어 복사</button>' +
+      '<button onclick="copyMbCmd(' + i + ',\'' + ivEsc + '\',\'' + ctEsc + '\',\'' + dtEsc + '\',this)" style="font-size:12px;padding:4px 12px;border:1px solid #4a90d9;border-radius:4px;background:#4a90d9;color:#fff;cursor:pointer;">📋 コマンドコピー</button>' +
       '<div id="mb-cmd-' + i + '" style="font-size:10px;font-family:monospace;margin-top:6px;color:#444;background:#f8f8f8;padding:6px;border-radius:4px;display:none;word-break:break-all;"></div>' +
     '</div>';
   }).join('');
@@ -1478,7 +1495,7 @@ function renderModeB() {
 function copyMbCmd(i, iv, ct, detail, btn) {
   var field = (document.getElementById('mb-field-' + i) ? document.getElementById('mb-field-' + i).value : '').trim();
   var val   = (document.getElementById('mb-val-' + i)   ? document.getElementById('mb-val-' + i).value   : '').trim();
-  if (!field || !val) { alert('필드명과 수정값을 입력하세요.'); return; }
+  if (!field || !val) { alert('フィールド名と修正値を入力してください。'); return; }
   var cmd = 'python TOOL/NOTIFY/apply_confirmed.py --mode warning --run-real' +
     ' --iv-no ' + iv + ' --ct-no ' + ct +
     ' --field ' + field + ' --corrected-value "' + val + '"' +
@@ -1487,7 +1504,7 @@ function copyMbCmd(i, iv, ct, detail, btn) {
   var el = document.getElementById('mb-cmd-' + i);
   el.textContent = cmd;
   el.style.display = '';
-  btn.textContent = '✅ 복사 완료';
+  btn.textContent = '✅ コピー完了';
 }
 
 // [PR-HANNYUHYO-CARD-B 2026-06-15]: 모드 D 렌더링 + 送信
@@ -1503,6 +1520,55 @@ function renderModeD() {
   }
   renderRecheckCt();  // [PR-RECHECK-CT-CONFIRM v5] 항상 호출
   renderUnreceivedAlert();  // [PR-UNRECEIVED-ALERT 2026-06-24]
+  renderUnmatchedPdf();
+  renderMissingHannyuhyo();
+}
+
+function renderUnmatchedPdf() {
+  const sec  = document.getElementById('unmatched-pdf-section');
+  const area = document.getElementById('unmatched-pdf-cards');
+  if (!sec || !area) return;
+  const SP = 'https://leenear.sharepoint.com/sites/leenearsite1/Shared%20Documents/%E5%8F%A4%E7%B4%99/-.%20%E5%8F%A4%E7%B4%99%E6%9B%B8%E9%A1%9E/%E2%96%B2%20LEENAI%20%E9%80%9A%E9%96%A2%E4%BD%9C%E6%A5%AD%E4%B8%AD/PHOTO';
+  const items = Array.isArray(UNMATCHED_PDF_DATA) ? UNMATCHED_PDF_DATA : [];
+  if (!items.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  area.innerHTML = items.map(item => {
+    const pdfLinks = (item.pdf_names || []).map(pdf =>
+      `<a class="btn-pdf" href="${SP}/${encodeURIComponent(item.iv_no)}/%E6%90%AC%E5%85%A5%E7%A5%A8/_unmatched/${encodeURIComponent(pdf)}" target="_blank" style="font-size:11px;margin-right:6px;">📄 ${pdf}</a>`
+    ).join('');
+    return `<div class="card" style="border-left:4px solid #e65100;margin-bottom:10px;">
+      <div class="card-header" style="background:#fff3e0;">
+        <span class="filename">${item.iv_no}</span>
+        ${item.cy_cut ? `<span style="font-size:11px;color:#e07000;font-weight:600;background:#ffe0b2;padding:2px 7px;border-radius:4px;">CY: ${item.cy_cut}</span>` : ''}
+        ${item.bkg_no ? `<span style="font-size:11px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:2px 7px;border-radius:4px;">BKG: ${item.bkg_no}</span>` : ''}
+        <span style="font-size:11px;color:#e65100;font-weight:600;background:#fbe9e7;padding:2px 7px;border-radius:4px;">🚫 対象外処理済み</span>
+      </div>
+      <div class="card-body" style="font-size:12px;color:#555;padding-top:8px;">${pdfLinks}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMissingHannyuhyo() {
+  const sec  = document.getElementById('missing-hannyuhyo-section');
+  const area = document.getElementById('missing-hannyuhyo-cards');
+  if (!sec || !area) return;
+  const items = Array.isArray(MISSING_HANNYUHYO_DATA) ? MISSING_HANNYUHYO_DATA : [];
+  if (!items.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  area.innerHTML = items.map(item => {
+    const ctBadges = (item.cts || []).map(ct =>
+      `<span style="font-size:11px;background:#f3e5f5;color:#7b1fa2;padding:2px 7px;border-radius:3px;margin-right:4px;">${ct.ct_no}${ct.packer ? ' · ' + ct.packer : ''}</span>`
+    ).join('');
+    return `<div class="card" style="border-left:4px solid #7b1fa2;margin-bottom:10px;">
+      <div class="card-header" style="background:#f3e5f5;">
+        <span class="filename">${item.iv_no}</span>
+        ${item.cy_cut ? `<span style="font-size:11px;color:#e07000;font-weight:600;background:#ffe0b2;padding:2px 7px;border-radius:4px;">CY: ${item.cy_cut}</span>` : ''}
+        ${item.bkg_no ? `<span style="font-size:11px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:2px 7px;border-radius:4px;">BKG: ${item.bkg_no}</span>` : ''}
+        <span style="font-size:11px;color:#7b1fa2;font-weight:600;background:#ede7f6;padding:2px 7px;border-radius:4px;">📭 搬入票未着</span>
+      </div>
+      <div class="card-body" style="font-size:12px;color:#555;padding-top:8px;">${ctBadges}</div>
+    </div>`;
+  }).join('');
 }
 
 function buildModeDCard(item, idx) {
@@ -1512,13 +1578,13 @@ function buildModeDCard(item, idx) {
     <div style="border:1px solid #e8e8e8;border-radius:6px;padding:10px;margin-bottom:8px;background:#fafafa;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <div style="display:flex;gap:4px;align-items:center;">
-          <div style="font-size:12px;font-weight:600;">${ct.ct_no || '(CT 미매핑)'}</div>
+          <div style="font-size:12px;font-weight:600;">${ct.ct_no || '(CT 未マッピング)'}</div>
           ${ct.packer ? `<span style="font-size:10px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:1px 6px;border-radius:3px;">${ct.packer}</span>` : ''}
           ${ct.plant ? `<span style="font-size:10px;color:#555;background:#f0f0f0;padding:1px 6px;border-radius:3px;">${ct.plant}</span>` : ''}
           <button onclick="toggleModeDCtRename(${idx},${ci})" style="font-size:10px;padding:2px 7px;border:1px solid #e57373;border-radius:3px;background:#fff;color:#e57373;cursor:pointer;margin-left:4px;">CT番号修正</button>
           ${(item.booking_slots && item.booking_slots.length > 1) ? `
-          <select id="md-slot-${idx}-${ci}" style="font-size:10px;padding:2px 4px;border:1px solid #bbb;border-radius:3px;margin-left:4px;color:#555;" title="Slot 수동 지정 (비워두면 자동)">
-            <option value="">Slot 자동</option>
+          <select id="md-slot-${idx}-${ci}" style="font-size:10px;padding:2px 4px;border:1px solid #bbb;border-radius:3px;margin-left:4px;color:#555;" title="Slot 手動指定 (空欄で自動)">
+            <option value="">Slot 自動</option>
             ${item.booking_slots.map(s => `<option value="${s.slot_no}">${s.slot_no}. ${s.plant||''}${s.work_date?' '+s.work_date:''}</option>`).join('')}
           </select>` : ''}
         </div>
@@ -1536,13 +1602,13 @@ function buildModeDCard(item, idx) {
             <span id="md-sel-pdf-label-${idx}-${ci}" style="font-size:10px;color:#888;"></span></div>`
         : `<div style="margin-bottom:6px;" id="md-unmatch-area-${idx}-${ci}">
             ${(item.unmatched_pdfs && item.unmatched_pdfs.length > 0)
-              ? `<div style="font-size:11px;color:#e57373;font-weight:600;margin-bottom:4px;">⚠ 반입표 미연결 — 아래에서 확인 후 선택하세요</div>
+              ? `<div style="font-size:11px;color:#e57373;font-weight:600;margin-bottom:4px;">⚠ 搬入票未連結 — 以下で確認後に選択してください</div>
                  ${item.unmatched_pdfs.map((pdf, pi) => `
                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
                      <a class="btn-pdf" href="https://leenear.sharepoint.com/sites/leenearsite1/Shared%20Documents/%E5%8F%A4%E7%B4%99/-.%20%E5%8F%A4%E7%B4%99%E6%9B%B8%E9%A1%9E/%E2%96%B2%20LEENAI%20%E9%80%9A%E9%96%A2%E4%BD%9C%E6%A5%AD%E4%B8%AD/PHOTO/${encodeURIComponent(item.iv_no)}/%E6%90%AC%E5%85%A5%E7%A5%A8/${encodeURIComponent(pdf)}" target="_blank" style="font-size:11px;">📄 ${pdf}</a>
-                     <button onclick="selectHannyuPdf(${idx},${ci},'${pdf}')" style="font-size:10px;padding:2px 8px;border:1px solid #4a90d9;border-radius:3px;background:#fff;color:#4a90d9;cursor:pointer;">この反入票を選択</button>
+                     <button onclick="selectHannyuPdf(${idx},${ci},'${pdf}')" style="font-size:10px;padding:2px 8px;border:1px solid #4a90d9;border-radius:3px;background:#fff;color:#4a90d9;cursor:pointer;">この搬入票を選択</button>
                    </div>`).join('')}`
-              : '<div style="font-size:11px;color:#aaa;">反入票 없음</div>'}
+              : '<div style="font-size:11px;color:#aaa;">搬入票 なし</div>'}
           </div>`}
       ${ct.packer === 'FUJI' ? (() => {
           const ctFolder = encodeURIComponent(ct.ct_no);
@@ -1567,7 +1633,7 @@ function buildModeDCard(item, idx) {
       <div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:4px;">
         <div class="field" style="flex:1.5;min-width:90px;"><label>SEAL 搬入票</label>
           <input id="md-seal-d-${idx}-${ci}" type="text" value="${ct.seal_from_pdf||ct.seal_no||''}"
-            placeholder="씰번호" oninput="checkCtFields(${idx},${ci})"
+            placeholder="シールNo." oninput="checkCtFields(${idx},${ci})"
             style="font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;background:${(ct.seal_from_pdf||ct.seal_no)?'#f8fff8':'#fff8f8'};width:100%;">
         </div>
         <div class="field" style="flex:1;min-width:70px;"><label>N/W (kg)</label>
@@ -1595,17 +1661,17 @@ function buildModeDCard(item, idx) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;
                   background:#fff3cd;padding:6px 8px;border-radius:4px;border:1px solid #ffc107;">
         <div>
-          <label style="font-size:11px;color:#856404;">⚠ PACKER ★ (수동 지정)</label>
+          <label style="font-size:11px;color:#856404;">⚠ PACKER ★ (手動設定)</label>
           <select id="md-packer-${idx}-${ci}"
                   onchange="updateMdPlantField(${idx},${ci})"
                   style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ffc107;border-radius:4px;">
-            ${PACKERS.map(p=>`<option value="${p}">${p||'-- 선택 --'}</option>`).join('')}
+            ${PACKERS.map(p=>`<option value="${p}">${p||'-- 選択 --'}</option>`).join('')}
           </select>
         </div>
         <div>
           <label style="font-size:11px;color:#856404;">PLANT</label>
           <div id="md-plant-field-${idx}-${ci}">
-            <input id="md-plant-${idx}-${ci}" placeholder="예: ナガイ(みよし)"
+            <input id="md-plant-${idx}-${ci}" placeholder="例: ナガイ(みよし)"
                    style="width:100%;font-size:12px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">
           </div>
         </div>
@@ -1626,11 +1692,11 @@ function buildModeDCard(item, idx) {
       <div id="add-ct-list-${idx}"></div>
       <button onclick="addCtRow(${idx},'${item.iv_no}')" style="font-size:12px;padding:4px 10px;border:1px solid #aaa;border-radius:4px;cursor:pointer;margin:4px 0;">＋ CT追加</button>
       <div id="bkg-reassign-form-${idx}" style="display:none;margin-bottom:8px;padding:10px;background:#fff8e1;border:1px solid #f9a825;border-radius:6px;">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#e65100;">⚠ 올바른 BKG 정보를 입력하세요</div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#e65100;">⚠ 正しいBKG情報を入力してください</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-          <label style="font-size:11px;color:#555;">BKG 번호<input id="bkg-reassign-bkg-${idx}" type="text" placeholder="예: JJCOSSJNA66A13" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #f9a825;border-radius:4px;font-size:13px;"/></label>
-          <label style="font-size:11px;color:#555;">CT 번호<input id="bkg-reassign-ct-${idx}" type="text" placeholder="예: TWCU8130281" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #f9a825;border-radius:4px;font-size:13px;"/></label>
-          <label style="font-size:11px;color:#555;">SEAL 번호<input id="bkg-reassign-seal-${idx}" type="text" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">BKG番号<input id="bkg-reassign-bkg-${idx}" type="text" placeholder="例: JJCOSSJNA66A13" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #f9a825;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">CT番号<input id="bkg-reassign-ct-${idx}" type="text" placeholder="例: TWCU8130281" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #f9a825;border-radius:4px;font-size:13px;"/></label>
+          <label style="font-size:11px;color:#555;">SEAL番号<input id="bkg-reassign-seal-${idx}" type="text" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
           <label style="font-size:11px;color:#555;">N/W (kg)<input id="bkg-reassign-nw-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
           <label style="font-size:11px;color:#555;">T/W (kg)<input id="bkg-reassign-tw-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
           <label style="font-size:11px;color:#555;">G/W (kg)<input id="bkg-reassign-gw-${idx}" type="number" style="width:100%;margin-top:2px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;"/></label>
@@ -1745,7 +1811,7 @@ function selectHannyuPdf(idx, ci, pdfName) {
   if (area) {
     area.innerHTML = `<div style="margin-bottom:4px;">
       <a class="btn-pdf" href="${SP}/${encodeURIComponent(items[idx].iv_no)}/%E6%90%AC%E5%85%A5%E7%A5%A8/${encodeURIComponent(pdfName)}" target="_blank">📄 ${pdfName}</a>
-      <span style="font-size:10px;color:#1a8754;font-weight:600;margin-left:6px;">✅ 선택됨</span>
+      <span style="font-size:10px;color:#1a8754;font-weight:600;margin-left:6px;">✅ 選択済</span>
     </div>`;
   }
   // CT確認 버튼 활성화 체크
@@ -1851,7 +1917,7 @@ async function renderReminder() {
     <button onclick="previewReminder(reminderTargets[${i}])"
       style="font-size:12px; padding:5px 14px; border:1px solid #2980b9; border-radius:4px;
              background:#fff; color:#2980b9; cursor:pointer;">
-      👁 미리보기
+      👁 プレビュー
     </button>
     <button onclick="sendReminder('${t.iv_no}','${t.packer_code}',${rnd},this,false,'${t.stage}')"
       ${sent || noEmail ? 'disabled' : ''}
