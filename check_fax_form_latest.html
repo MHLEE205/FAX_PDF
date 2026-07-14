@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-14 16:13</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-14 16:20</div>
   </div>
 </div>
 
@@ -457,14 +457,21 @@ async function _doConfirmHannyuhyoCard(idx) {
     confirmed_by: userName||'', confirmed_cts: confirmedCts };
   const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED',`hannyuhyo_confirmed_${ts}.json`];
   await _uploadJsonToPath(pathSegs, payload, token);
-  // [PR-DIRECT-TRIGGER v4.2 2026-07-08] SharePoint 저장 직후 LAN 서버에 즉시 /run-phase4 trigger
-  // LAN 밖(외부)이면 fetch 실패 → 무시하고 다음 cron에서 갱신
+  // [PR-DIRECT-APPLY 2026-07-14] SharePoint 저장과 병행 — LAN 서버에 직접 apply 요청
+  // LAN 밖이면 fetch 실패 → 무시 (watcher/cron fallback으로 처리)
+  try {
+    await fetch('http://192.168.1.34:18765/apply-confirmed',
+      { method: 'POST', body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000) });
+  } catch(e) { /* LAN 밖 또는 서버 미기동 — 무시 */ }
+  // 실況表 갱신 trigger
   try {
     await fetch('http://192.168.1.34:18765/run-phase4',
       { method: 'POST', body: '{}',
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(3000) });
-  } catch(e) { /* LAN 밖 또는 서버 미기동 — 무시 */ }
+  } catch(e) { /* 무시 */ }
   const _doneEl = document.getElementById('md-done-'+idx);
   _doneEl.textContent = '📤 送信済み — ⏳ 反映確認中...';
   document.getElementById('md-card-'+idx).classList.add('done');
@@ -1316,7 +1323,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-14 16:13</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-14 16:20</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
