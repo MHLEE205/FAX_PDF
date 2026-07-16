@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 18:15</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 18:18</div>
   </div>
 </div>
 
@@ -1356,7 +1356,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 18:15</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 18:18</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1629,7 +1629,7 @@ function renderMissingHannyuhyo() {
 function buildModeDCard(item, idx) {
   const SHAREPOINT_BASE = 'https://leenear.sharepoint.com/sites/leenearsite1/Shared%20Documents/%E5%8F%A4%E7%B4%99/-.%20%E5%8F%A4%E7%B4%99%E6%9B%B8%E9%A1%9E/%E2%96%B2%20LEENAI%20%E9%80%9A%E9%96%A2%E4%BD%9C%E6%A5%AD%E4%B8%AD/PHOTO';  // [PR-FUJI-KEISHO-MODED 2026-06-24]
   const cts = item.cts || [];
-  const ctRows = cts.length ? cts.map((ct, ci) => {
+  const _ctRowArr = cts.length ? cts.map((ct, ci) => {
     // [PR-PHOTO-GUARD 2026-07-17] ct_no なし → 완전 미도착 슬롯은 숨김 / 写真0枚 → 비활성화 카드
     if (!ct.ct_no) return '';  // 사진·반입표 모두 미도착 booking 슬롯 → 표시 안 함
     if (ct.photos_count === 0) {
@@ -1748,8 +1748,9 @@ function buildModeDCard(item, idx) {
         </div>
       </div>` : ''}
     </div>`;
-  }).join('')
-  : renderAddCtForm(item.iv_no, idx);
+  } : null;
+  if (_ctRowArr && _ctRowArr.every(r => r === '')) return '';
+  const ctRows = _ctRowArr ? _ctRowArr.join('') : renderAddCtForm(item.iv_no, idx);
 
   return `<div class="card" id="md-card-${idx}">
     <div class="card-header">
