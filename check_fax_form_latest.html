@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v4.9 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v5.0 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v4.9</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v5.0</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 17:06</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 17:18</div>
   </div>
 </div>
 
@@ -533,6 +533,24 @@ async function sendAll() {
   const btnD = document.getElementById('btn-send-all-d');
   if (btn)  { btn.disabled  = true; btn.textContent  = '⏳ 送信中...'; }
   if (btnD) { btnD.disabled = true; btnD.textContent = '⏳ 送信中...'; }
+  // [PR-SLOT-REQUIRED-v1 2026-07-16] SLOT 미선택 방지 — 슬롯 드롭다운이 있는 CT는 선택 필수
+  const _unselSlots = [];
+  for (const _si of [...mdPending]) {
+    document.querySelectorAll(`[id^="md-slot-${_si}-"]`).forEach(sel => {
+      if (!sel.value) {
+        sel.style.borderColor = '#e53935';
+        sel.style.borderWidth = '2px';
+        const _m = sel.id.match(/md-slot-\d+-(\d+)/);
+        _unselSlots.push(`IV#${_si} CT${_m ? ' '+_m[1] : ''}`);
+      }
+    });
+  }
+  if (_unselSlots.length) {
+    alert('⚠️ Slot が未選択のCTがあります:\n' + _unselSlots.join('\n') + '\n\nSlot を選択してから送信してください。');
+    if (btn)  { btn.disabled=false;  btn.textContent='📤 一括送信'; }
+    if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; }
+    return;
+  }
   const errors = [];
   // FAX 결과 송신
   try {
@@ -1338,7 +1356,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 17:06</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-16 17:18</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1620,9 +1638,12 @@ function buildModeDCard(item, idx) {
           ${ct.plant ? `<span style="font-size:10px;color:#555;background:#f0f0f0;padding:1px 6px;border-radius:3px;">${ct.plant}</span>` : ''}
           <button onclick="toggleModeDCtRename(${idx},${ci})" style="font-size:10px;padding:2px 7px;border:1px solid #e57373;border-radius:3px;background:#fff;color:#e57373;cursor:pointer;margin-left:4px;">CT番号修正</button>
           ${(item.booking_slots && item.booking_slots.length > 1) ? `
-          <select id="md-slot-${idx}-${ci}" style="font-size:10px;padding:2px 4px;border:1px solid #bbb;border-radius:3px;margin-left:4px;color:#555;" title="Slot 手動指定 (空欄で自動)">
-            <option value="">Slot 自動</option>
-            ${item.booking_slots.map(s => `<option value="${s.slot_no}">${s.slot_no}. ${s.plant||''}${s.work_date?' '+s.work_date:''}</option>`).join('')}
+          <select id="md-slot-${idx}-${ci}"
+            style="font-size:10px;padding:2px 4px;border:2px solid #e57373;border-radius:3px;margin-left:4px;color:#555;"
+            title="⚠️ Slot 選択必須"
+            onchange="this.style.borderColor=this.value?'#27ae60':'#e57373'">
+            <option value="" disabled selected>-- Slot 選択 --</option>
+            ${item.booking_slots.map(s => `<option value="${s.slot_no}">${s.slot_no}. ${s.plant||''} ${s.item_code||''} ${s.work_date||''}</option>`).join('')}
           </select>` : ''}
         </div>
         <div id="md-rename-${idx}-${ci}" style="display:none;margin:4px 0 2px 0;">
