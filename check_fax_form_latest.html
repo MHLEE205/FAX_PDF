@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v5.3 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v5.4 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v5.3</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v5.4</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 20:52</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 21:09</div>
   </div>
 </div>
 
@@ -273,50 +273,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20260714073405-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260714073405-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260714073405-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-14T07:34:05+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-13T23:05:43.932247+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260716142600-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260716142600-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260716142600-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-16T14:26:00+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-16T06:10:40.549268+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260716183614-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260716183614-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260716183614-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-16T18:36:14+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-16T10:17:40.390325+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
@@ -1151,6 +1108,7 @@ async function uploadResults() {
   const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_FAX','_CONFIRMED', fileName];
   if (!token) {
     console.warn('uploadResults: no token — fallback to download');
+    alert('⚠️ 認証トークンが見つかりません。\n再ログインしてから送信してください。\n\nファイルをダウンロードします。ダウンロードされたJSONファイルは\n_FAX/_CONFIRMED/ フォルダに直接コピーしてください。');
     downloadResults();
     return;
   }
@@ -1162,6 +1120,7 @@ async function uploadResults() {
     _lockUpdateBtns(); // [PR-UPDATE-LOCK-AFTER-SEND-v1 2026-06-25]
   } catch(e) {
     console.warn('uploadResults error — fallback to download', e);
+    alert('⚠️ SharePointへのアップロードに失敗しました。\nファイルをダウンロードします。ダウンロードされたJSONファイルは\n_FAX/_CONFIRMED/ フォルダに直接コピーしてください。\n\n(エラー: ' + e.message + ')');
     downloadResults();
   }
 }
@@ -1370,7 +1329,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 20:52</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 21:09</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
