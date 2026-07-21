@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 10:35</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 10:37</div>
   </div>
 </div>
 
@@ -1370,7 +1370,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 10:35</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-21 10:37</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -2328,12 +2328,12 @@ let _slotOrder = [];     // 現在の表示順（↑↓ 操作後）
 let _slotIvNo  = '';
 
 async function fetchSlotInfo() {
-  const ivInput = document.getElementById('slot-iv-input');
-  const raw = ivInput ? ivInput.value.trim() : '';
-  if (!raw) { alert('IV番号 または BKG番号を入力してください'); return; }
-  // 숫자만이면 BKG, 그 외는 IV
-  const isDigitOnly = /^\d+$/.test(raw);
-  const query = isDigitOnly
+  const ivInput  = document.getElementById('slot-iv-input');
+  const typeEl   = document.querySelector('input[name="slot-search-type"]:checked');
+  const raw      = ivInput ? ivInput.value.trim() : '';
+  const searchType = typeEl ? typeEl.value : 'iv';
+  if (!raw) { alert('番号を入力してください'); return; }
+  const query = searchType === 'bkg'
     ? '/slot-info?bkg=' + encodeURIComponent(raw)
     : '/slot-info?iv='  + encodeURIComponent(raw.toUpperCase());
   const btn = document.getElementById('btn-slot-fetch');
@@ -2343,7 +2343,7 @@ async function fetchSlotInfo() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     if (!data.slots || !data.slots.length) throw new Error('スロットなし');
-    _slotIvNo  = iv;
+    _slotIvNo  = data.iv_no || raw.toUpperCase();
     _slotData  = data.slots;
     _slotOrder = data.slots.map(function(s, i) { return Object.assign({}, s, { _origIdx: i }); });
     renderSlotCards();
@@ -2503,11 +2503,16 @@ function renderSlotChange() {
     '</div>' +
     '<div style="max-width:900px;margin:16px auto;padding:0 16px;">' +
       '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-bottom:12px;">' +
-        '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">IV番号 または BKG番号</div>' +
-        '<div style="font-size:11px;color:#aaa;margin-bottom:8px;">数字のみ → BKG番号で検索　／　それ以外 → IV番号で検索</div>' +
+        '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">検索</div>' +
+        '<div style="display:flex;gap:16px;align-items:center;margin-bottom:8px;">' +
+          '<label style="font-size:12px;color:#444;display:flex;align-items:center;gap:4px;cursor:pointer;">' +
+            '<input type="radio" name="slot-search-type" value="iv" checked> IV番号</label>' +
+          '<label style="font-size:12px;color:#444;display:flex;align-items:center;gap:4px;cursor:pointer;">' +
+            '<input type="radio" name="slot-search-type" value="bkg"> BKG番号</label>' +
+        '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
-          '<input id="slot-iv-input" type="text" placeholder="例: NCV2607-22 または 272388746"' +
-            ' style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:4px;width:260px;"' +
+          '<input id="slot-iv-input" type="text" placeholder="例: NCV2607-22"' +
+            ' style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:4px;width:240px;"' +
             ' onkeydown="if(event.key===\'Enter\') fetchSlotInfo()">' +
           '<button id="btn-slot-fetch" onclick="fetchSlotInfo()"' +
             ' style="font-size:12px;padding:7px 16px;border:1px solid #4a90d9;border-radius:4px;' +
@@ -2546,6 +2551,15 @@ function renderSlotChange() {
     '</div>' +
     '<div class="footer">🤖 このフォームはAIが自動生成しています。&nbsp;<strong>✦ Powered by LEENAI Automation System</strong></div>';
 }
+function _slotUpdatePlaceholder() {
+  var typeEl = document.querySelector('input[name="slot-search-type"]:checked');
+  var input  = document.getElementById('slot-iv-input');
+  if (!input || !typeEl) return;
+  input.placeholder = typeEl.value === 'bkg' ? '例: 272388746' : '例: NCV2607-22';
+}
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.name === 'slot-search-type') _slotUpdatePlaceholder();
+});
 // ── END SLOT 変更 ──────────────────────────────────────────────────────────────
 
 // [PR-REMINDER-DRAFT-RESTORE 2026-06-30] draft パラメータ追加
