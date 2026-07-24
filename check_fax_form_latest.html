@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v5.4</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v5.5</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 14:34</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 14:53</div>
   </div>
 </div>
 
@@ -273,22 +273,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20260716183614-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260716183614-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260716183614-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-16T18:36:14+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-16T10:17:40.390325+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
@@ -1353,7 +1338,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 14:34</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 14:53</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -2532,7 +2517,90 @@ function renderSlotChange() {
         '</div>' +
       '</div>' +
     '</div>' +
+    '<div style="max-width:900px;margin:16px auto;padding:0 16px;">' +
+      '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;">' +
+        '<div style="font-size:13px;font-weight:700;color:#1976d2;margin-bottom:12px;">📦 수동 회수 CT 등록</div>' +
+        '<div style="font-size:12px;color:#666;margin-bottom:12px;">사진 폴더가 이미 있는 CT를 지정 슬롯에 등록합니다. 다음 cron에서 N/W·bales 자동 OCR.</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">' +
+          '<div>' +
+            '<div style="font-size:11px;color:#888;margin-bottom:3px;">IV 번호</div>' +
+            '<input id="reg-iv" type="text" placeholder="NHS2607-05" style="width:130px;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;">' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:11px;color:#888;margin-bottom:3px;">CT 번호</div>' +
+            '<input id="reg-ct" type="text" placeholder="FCIU7236615" style="width:140px;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-transform:uppercase;">' +
+          '</div>' +
+          '<button onclick="loadRegSlots()" style="padding:6px 12px;background:#1976d2;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">슬롯 조회</button>' +
+        '</div>' +
+        '<div id="reg-slots-area" style="display:none;margin-bottom:10px;">' +
+          '<div style="font-size:11px;color:#888;margin-bottom:3px;">빈 슬롯 선택</div>' +
+          '<select id="reg-slot-sel" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;"></select>' +
+        '</div>' +
+        '<div id="reg-submit-area" style="display:none;">' +
+          '<button onclick="submitRegCt()" style="padding:7px 18px;background:#27ae60;color:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer;">등록</button>' +
+        '</div>' +
+        '<div id="reg-result" style="margin-top:10px;font-size:12px;"></div>' +
+      '</div>' +
+    '</div>' +
     '<div class="footer">🤖 このフォームはAIが自動生成しています。&nbsp;<strong>✦ Powered by LEENAI Automation System</strong></div>';
+}
+
+async function loadRegSlots() {
+  var iv = document.getElementById('reg-iv').value.trim().toUpperCase();
+  if (!iv) { alert('IV 번호를 입력하세요'); return; }
+  var res = document.getElementById('reg-result');
+  res.textContent = '조회 중...';
+  try {
+    var r = await fetch(LAN_SLOT + '/slot-info?iv=' + encodeURIComponent(iv));
+    var data = await r.json();
+    if (!r.ok) { res.textContent = '오류: ' + (data.msg || r.status); return; }
+    var cts = data.cts || [];
+    var bi = data.containers || data.booking_containers || [];
+    // 이미 사용 중인 ct_id 수집
+    var usedIds = new Set(cts.filter(function(c){ return !c.not_found; }).map(function(c){ return c.ct_id; }));
+    // 빈 슬롯 = bi에서 usedIds에 없는 것
+    var emptySlots = bi ? bi.filter(function(s){ return s && s.ct_id && !usedIds.has(s.ct_id); }) : [];
+    if (emptySlots.length === 0) { res.textContent = '빈 슬롯 없음'; return; }
+    var sel = document.getElementById('reg-slot-sel');
+    sel.innerHTML = '';
+    emptySlots.forEach(function(s, i) {
+      var opt = document.createElement('option');
+      opt.value = JSON.stringify({ct_id: s.ct_id, slot_index: bi.indexOf(s)});
+      var label = '[slot' + bi.indexOf(s) + '] ' + (s.packer_code||'?') + ' / ' + (s.item_code||'?');
+      if (s.work_date) label += ' / ' + s.work_date;
+      if (s.plant_name) label += ' / ' + s.plant_name;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+    document.getElementById('reg-slots-area').style.display = '';
+    document.getElementById('reg-submit-area').style.display = '';
+    res.textContent = '빈 슬롯 ' + emptySlots.length + '개 발견';
+  } catch(e) { res.textContent = '조회 실패: ' + e.message; }
+}
+
+async function submitRegCt() {
+  var iv  = document.getElementById('reg-iv').value.trim().toUpperCase();
+  var ct  = document.getElementById('reg-ct').value.trim().toUpperCase();
+  var sel = document.getElementById('reg-slot-sel').value;
+  if (!iv || !ct || !sel) { alert('IV·CT·슬롯을 모두 입력하세요'); return; }
+  var slot_index;
+  try { slot_index = JSON.parse(sel).slot_index; } catch(e) { alert('슬롯 파싱 오류'); return; }
+  var res = document.getElementById('reg-result');
+  res.textContent = '등록 중...';
+  try {
+    var r = await fetch(LAN_SLOT + '/register-ct', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({iv_no: iv, ct_no: ct, slot_index: slot_index,
+                            reported_by: (typeof userName !== 'undefined' ? userName : '')})
+    });
+    var data = await r.json();
+    if (data.ok) {
+      res.innerHTML = '<span style="color:#27ae60;">✅ 등록 완료 — ' + ct + ' (사진 ' + data.photos + '장). 다음 cron에서 N/W·bales OCR 예정.</span>';
+    } else {
+      res.innerHTML = '<span style="color:#e53935;">❌ 오류: ' + (data.msg||'알 수 없음') + '</span>';
+    }
+  } catch(e) { res.textContent = '등록 실패: ' + e.message; }
 }
 function _slotUpdatePlaceholder() {
   var typeEl = document.querySelector('input[name="slot-search-type"]:checked');
