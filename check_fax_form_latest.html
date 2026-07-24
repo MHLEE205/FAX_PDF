@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 15:13</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 15:14</div>
   </div>
 </div>
 
@@ -273,36 +273,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20260716183614-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260716183614-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260716183614-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-16T18:36:14+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-16T10:17:40.390325+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260724140858-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260724140858-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260724140858-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-24T14:08:58+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-24T06:13:21.635361+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
@@ -1367,7 +1338,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 15:13</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-24 15:14</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -2634,19 +2605,21 @@ async function loadRegSlots() {
   try {
     var r = await fetch(LAN_SLOT + '/slot-info?iv=' + encodeURIComponent(iv));
     var data = await r.json();
-    if (!r.ok) { res.textContent = 'エラー: ' + (data.msg || r.status); return; }
-    var cts = data.cts || [];
-    var bi  = data.containers || data.booking_containers || [];
-    var usedIds = new Set(cts.filter(function(c){ return !c.not_found; }).map(function(c){ return c.ct_id; }));
-    var emptySlots = bi ? bi.filter(function(s){ return s && s.ct_id && !usedIds.has(s.ct_id); }) : [];
+    if (!r.ok) { res.textContent = 'エラー: ' + (data.error || data.msg || r.status); return; }
+    // 既存CT のct_idセット (containers.json に登録済み)
+    var usedIds = new Set((data.slots || []).map(function(s){ return s.ct_id; }).filter(Boolean));
+    // booking_info 全スロットから空きを抽出
+    var allSlots = data.booking_slots || [];
+    var emptySlots = allSlots.filter(function(s){ return s.ct_id && !usedIds.has(s.ct_id); });
     if (emptySlots.length === 0) { res.textContent = '空きスロットなし（全スロット使用中）'; return; }
     var sel = document.getElementById('reg-slot-sel');
     sel.innerHTML = '<option value="">-- スロットを選択してください --</option>';
     emptySlots.forEach(function(s) {
       var opt = document.createElement('option');
-      opt.value = JSON.stringify({ct_id: s.ct_id, slot_index: bi.indexOf(s)});
-      var label = '【slot' + bi.indexOf(s) + '】 ' + (s.packer_code||'?') + ' / ' + (s.item_code||'?');
+      opt.value = JSON.stringify({ct_id: s.ct_id, slot_index: s.slot_index});
+      var label = '【slot' + s.slot_index + '】 ' + (s.packer_code||'?') + ' / ' + (s.item_code||'?');
       if (s.work_date) label += ' / ' + s.work_date;
+      if (s.work_time) label += ' ' + s.work_time;
       if (s.plant_name) label += ' / ' + s.plant_name;
       opt.textContent = label;
       sel.appendChild(opt);
