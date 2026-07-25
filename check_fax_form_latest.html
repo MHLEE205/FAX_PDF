@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-25 10:11</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-25 10:19</div>
   </div>
 </div>
 
@@ -1367,7 +1367,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-25 10:11</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-25 10:19</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -2744,7 +2744,7 @@ async function sendReminder(ivNo, packerCode, rnd, btn, draft=false, stage='d2')
   }
 }
 
-// ── [PR-FAX-NO-MATCH-UI v1 2026-07-25] 未分類FAX (_NO_MATCH) 確認 ──────────
+// ── [PR-FAX-NO-MATCH-UI v2 2026-07-25] 未分類FAX (_NO_MATCH) 確認 ──────────
 const LAN_NM = 'http://192.168.1.34:18765';
 
 async function renderNoMatch() {
@@ -2759,7 +2759,7 @@ async function renderNoMatch() {
   const listEl = document.getElementById('nm-list');
   listEl.innerHTML = '<div style="color:#888;padding:20px;text-align:center;">読み込み中...</div>';
   try {
-    const r = await fetch(LAN_NM + '/fax-no-match', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch(LAN_NM + '/fax-no-match', { signal: AbortSignal.timeout(8000) });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     const files = data.files || [];
@@ -2769,37 +2769,104 @@ async function renderNoMatch() {
     }
     listEl.innerHTML = '<div style="font-size:12px;color:#888;margin-bottom:8px;">' + files.length + ' 件</div>';
     files.forEach(function(f) {
-      const dt  = new Date(f.mtime * 1000).toLocaleString('ja-JP');
-      const kb  = Math.round(f.size / 1024);
-      const fno = f.fax_number || '';
-      const cmp = f.company    || '';
-      const knownBadge = fno && cmp
-        ? '<span style="font-size:11px;background:#fff8e6;color:#b8860b;border:1px solid #f5dfa0;border-radius:10px;padding:1px 7px;margin-left:6px;">既登録: ' + cmp + '</span>'
-        : (fno ? '<span style="font-size:11px;background:#f0f6ff;color:#4a90d9;border:1px solid #b0d0f5;border-radius:10px;padding:1px 7px;margin-left:6px;">FAX: ' + fno + '</span>' : '');
+      const dt = new Date(f.mtime * 1000).toLocaleString('ja-JP');
+      const kb = Math.round(f.size / 1024);
+      const fid = f.filename.replace(/\./g, '_');
       const card = document.createElement('div');
-      card.style.cssText = 'background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:14px 16px;margin-bottom:10px;';
+      card.id = 'nm-card-' + fid;
+      card.style.cssText = 'background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:14px 16px;margin-bottom:12px;';
       card.innerHTML =
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+        // ── ヘッダー行 ──
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
           '<a href="' + LAN_NM + '/fax-pdf?f=' + encodeURIComponent(f.filename) + '" target="_blank"' +
           ' style="font-family:monospace;font-size:12px;font-weight:600;color:#4a90d9;text-decoration:none;border-bottom:1px dashed #4a90d9;">' + f.filename + '</a>' +
-          knownBadge +
-          '<span style="font-size:11px;color:#aaa;margin-left:4px;">' + dt + ' / ' + kb + ' KB</span>' +
+          '<span style="font-size:11px;color:#aaa;">' + dt + ' / ' + kb + ' KB</span>' +
           '<span style="flex:1;"></span>' +
           '<a href="' + LAN_NM + '/fax-pdf?f=' + encodeURIComponent(f.filename) + '" target="_blank"' +
           ' style="font-size:12px;padding:3px 10px;border:1px solid #4a90d9;border-radius:4px;background:#fff;color:#4a90d9;text-decoration:none;">📄 PDF</a>' +
+          '<button onclick="nmDelete(\'' + f.filename + '\',this)" style="font-size:12px;padding:3px 10px;border:1px solid #c0392b;border-radius:4px;background:#fff;color:#c0392b;cursor:pointer;">🗑 削除</button>' +
         '</div>' +
-        '<div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">' +
-          '<button onclick="nmDelete(\'' + f.filename + '\',this)" style="font-size:12px;padding:5px 14px;border:1px solid #c0392b;border-radius:4px;background:#fff;color:#c0392b;cursor:pointer;">🗑 削除</button>' +
-          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
-            '<input id="nm-faxno-' + f.filename + '" value="' + fno + '" placeholder="FAX発信番号 (数字のみ)" style="font-size:12px;padding:4px 8px;border:1px solid #ccc;border-radius:4px;width:180px;">' +
-            '<input id="nm-company-' + f.filename + '" value="' + cmp + '" placeholder="発信会社名" style="font-size:12px;padding:4px 8px;border:1px solid #ccc;border-radius:4px;width:160px;">' +
-            '<button onclick="nmRescue(\'' + f.filename + '\',this)" style="font-size:12px;padding:5px 14px;border:1px solid #27ae60;border-radius:4px;background:#fff;color:#27ae60;cursor:pointer;">✔ 搬入票として救済 → _CHECK_FAX</button>' +
-          '</div>' +
-        '</div>';
+        // ── BKG 入力行 ──
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+          '<span style="font-size:12px;color:#555;white-space:nowrap;">BOOKING NO.</span>' +
+          '<input id="nm-bkg-' + fid + '" placeholder="例: PCJTYO26075074" style="font-size:13px;padding:5px 10px;border:1px solid #ccc;border-radius:4px;width:220px;font-family:monospace;">' +
+          '<button onclick="nmFetchSlots(\'' + f.filename + '\',\'' + fid + '\')" style="font-size:12px;padding:5px 14px;border:1px solid #4a90d9;border-radius:4px;background:#4a90d9;color:#fff;cursor:pointer;">取得</button>' +
+        '</div>' +
+        // ── スロット表示エリア ──
+        '<div id="nm-slots-' + fid + '" style="margin-top:10px;"></div>';
       listEl.appendChild(card);
     });
   } catch(e) {
     listEl.innerHTML = '<div style="color:#c0392b;padding:16px;font-size:12px;background:#fff5f5;border-radius:4px;">⚠ サーバー接続失敗: ' + e.message + '</div>';
+  }
+}
+
+async function nmFetchSlots(filename, fid) {
+  const bkg = (document.getElementById('nm-bkg-' + fid) || {}).value || '';
+  if (!bkg.trim()) { alert('BOOKING NO. を入力してください'); return; }
+  const slotsEl = document.getElementById('nm-slots-' + fid);
+  slotsEl.innerHTML = '<div style="color:#888;font-size:12px;padding:6px 0;">取得中...</div>';
+  try {
+    const r = await fetch(LAN_NM + '/slot-info?bkg=' + encodeURIComponent(bkg.trim()), { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    if (!r.ok) { slotsEl.innerHTML = '<div style="color:#c0392b;font-size:12px;">❌ ' + (d.error || 'BKG 番号が見つかりません') + '</div>'; return; }
+    const ivNo = d.iv_no || '';
+    const bkSlots = d.booking_slots || [];
+    if (!bkSlots.length) { slotsEl.innerHTML = '<div style="color:#888;font-size:12px;">スロットなし</div>'; return; }
+    // 既登録CT_IDセット
+    const usedCtIds = new Set((d.slots || []).filter(s => s.ct_no).map(s => s.ct_id));
+    let html = '<div style="font-size:12px;color:#555;margin-bottom:6px;">IV: <b>' + ivNo + '</b> — スロットを選択してください</div>' +
+               '<div style="display:flex;flex-direction:column;gap:4px;">';
+    bkSlots.forEach(function(s, i) {
+      const used = usedCtIds.has(s.ct_id);
+      const label = [s.work_date, s.packer_name, s.item_name, s.plant_name].filter(Boolean).join(' / ');
+      const style = used
+        ? 'opacity:0.45;cursor:not-allowed;'
+        : 'cursor:pointer;';
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid ' + (used ? '#e0e0e0' : '#ccc') + ';border-radius:4px;background:' + (used ? '#fafafa' : '#fff') + ';' + style + '">' +
+        '<input type="radio" name="nm-slot-' + fid + '" value="' + i + '" ' + (used ? 'disabled' : '') + ' style="cursor:pointer;">' +
+        '<span style="font-size:12px;color:' + (used ? '#aaa' : '#333') + ';">' + label + (used ? ' <span style="color:#aaa;">(登録済)</span>' : '') + '</span>' +
+        '</label>';
+    });
+    html += '</div>';
+    html += '<div style="margin-top:10px;">' +
+      '<button onclick="nmLink(\'' + filename + '\',\'' + fid + '\',\'' + ivNo + '\',this)" style="font-size:13px;padding:6px 20px;border:1px solid #27ae60;border-radius:4px;background:#27ae60;color:#fff;cursor:pointer;font-weight:600;">✔ この搬入票を登録</button>' +
+    '</div>';
+    slotsEl.innerHTML = html;
+  } catch(e) {
+    slotsEl.innerHTML = '<div style="color:#c0392b;font-size:12px;">通信エラー: ' + e.message + '</div>';
+  }
+}
+
+async function nmLink(filename, fid, ivNo, btn) {
+  const sel = document.querySelector('input[name="nm-slot-' + fid + '"]:checked');
+  if (!sel) { alert('スロットを選択してください'); return; }
+  if (!confirm('搬入票を登録します。\n' + filename + '\n→ ' + ivNo + '/搬入票/\n\n次回cron実行時にOCR処理されます。')) return;
+  btn.disabled = true; btn.textContent = '登録中...';
+  try {
+    const r = await fetch(LAN_NM + '/fax-no-match-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: filename, iv_no: ivNo }),
+      signal: AbortSignal.timeout(8000)
+    });
+    const d = await r.json();
+    if (d.ok) {
+      const card = document.getElementById('nm-card-' + fid);
+      if (card) {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+        card.querySelector('div').insertAdjacentHTML('beforeend',
+          '<span style="font-size:12px;color:#27ae60;font-weight:600;margin-left:12px;">✓ ' + ivNo + '/搬入票/ へ登録完了</span>');
+      }
+      setTimeout(renderNoMatch, 1500);
+    } else {
+      alert('失敗: ' + (d.msg || ''));
+      btn.disabled = false; btn.textContent = '✔ この搬入票を登録';
+    }
+  } catch(e) {
+    alert('通信エラー: ' + e.message);
+    btn.disabled = false; btn.textContent = '✔ この搬入票を登録';
   }
 }
 
@@ -2815,7 +2882,9 @@ async function nmDelete(filename, btn) {
     });
     const d = await r.json();
     if (d.ok) {
-      btn.closest('div[style]').remove();
+      const fid = filename.replace(/\./g, '_');
+      const card = document.getElementById('nm-card-' + fid);
+      if (card) card.remove();
     } else {
       alert('削除失敗: ' + (d.msg || ''));
       btn.disabled = false; btn.textContent = '🗑 削除';
@@ -2823,33 +2892,6 @@ async function nmDelete(filename, btn) {
   } catch(e) {
     alert('通信エラー: ' + e.message);
     btn.disabled = false; btn.textContent = '🗑 削除';
-  }
-}
-
-async function nmRescue(filename, btn) {
-  const faxNo   = (document.getElementById('nm-faxno-' + filename)   || {}).value || '';
-  const company = (document.getElementById('nm-company-' + filename) || {}).value || '';
-  if (!confirm('搬入票として救済し _CHECK_FAX に移動します。\n' + filename + (faxNo ? '\nFAX番号: ' + faxNo : '') + (company ? '\n発信会社: ' + company : '') + '\n\n次回以降この発信番号は自動的にAと判定されます。')) return;
-  btn.disabled = true; btn.textContent = '処理中...';
-  try {
-    const r = await fetch(LAN_NM + '/fax-no-match-rescue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: filename, fax_number: faxNo.replace(/\D/g,''), company: company }),
-      signal: AbortSignal.timeout(8000)
-    });
-    const d = await r.json();
-    if (d.ok) {
-      btn.closest('div[style]').style.opacity = '0.4';
-      btn.textContent = '✓ 救済完了';
-      setTimeout(renderNoMatch, 1200);
-    } else {
-      alert('失敗: ' + (d.msg || ''));
-      btn.disabled = false; btn.textContent = '✔ 搬入票として救済 → _CHECK_FAX';
-    }
-  } catch(e) {
-    alert('通信エラー: ' + e.message);
-    btn.disabled = false; btn.textContent = '✔ 搬入票として救済 → _CHECK_FAX';
   }
 }
 </script>
