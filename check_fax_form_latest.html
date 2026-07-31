@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 19:35</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 19:43</div>
   </div>
 </div>
 
@@ -713,6 +713,8 @@ function renderRecheckCt() {
 function buildRecheckCard(item, idx) {
   const SHAREPOINT_BASE = 'https://leenear.sharepoint.com/sites/leenearsite1/Shared%20Documents/%E5%8F%A4%E7%B4%99/-.%20%E5%8F%A4%E7%B4%99%E6%9B%B8%E9%A1%9E/%E2%96%B2%20LEENAI%20%E9%80%9A%E9%96%A2%E4%BD%9C%E6%A5%AD%E4%B8%AD/PHOTO';
   // [PR-RECHECK-CT-LOGIC-FIX 2026-06-21] pdfLinks (IV 레벨) 제거
+  const polBadge  = item.pol
+    ? `<span style="font-size:10px;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:3px;margin-left:4px;">${item.pol}</span>` : '';
   const cyBadge  = item.cy_cut
     ? `<span style="font-size:10px;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;margin-left:4px;">CY: ${item.cy_cut}</span>` : '';
   const bkgBadge = item.bkg_no
@@ -790,7 +792,7 @@ function buildRecheckCard(item, idx) {
   }).join('');
   return `<div class="card" id="rc-card-${idx}" style="margin-bottom:12px;">
     <div class="card-header">
-      <span class="filename">${item.iv_no}</span>${cyBadge}${bkgBadge}
+      <span class="filename">${item.iv_no}</span>${polBadge}${cyBadge}${bkgBadge}
       <span class="spacer"></span>
       <span class="meta">${item.cts.length}件 再確認</span>
     </div>
@@ -1352,7 +1354,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 19:35</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 19:43</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1825,6 +1827,7 @@ function buildModeDCard(item, idx) {
   return `<div class="card" id="md-card-${idx}">
     <div class="card-header">
       <span class="filename">${item.iv_no}</span>
+      ${item.pol ? `<span style="font-size:11px;color:#2e7d32;font-weight:600;background:#e8f5e9;padding:2px 7px;border-radius:4px;">${item.pol}</span>` : ''}
       ${item.cy_cut ? `<span style="font-size:11px;color:#e07000;font-weight:600;background:#fff3e0;padding:2px 7px;border-radius:4px;">CY: ${item.cy_cut}</span>` : ''}
       ${item.bkg_no ? `<span style="font-size:11px;color:#1a73e8;font-weight:600;background:#e8f0fe;padding:2px 7px;border-radius:4px;">BKG: ${item.bkg_no}</span>` : ''}
       <span class="spacer"></span>
