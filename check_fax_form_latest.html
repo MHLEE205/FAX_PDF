@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 14:47</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 14:50</div>
   </div>
 </div>
 
@@ -274,20 +274,6 @@ async function _checkAuth() {
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
 const CONFIRMED_DATA = {
-  "20260731084834-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260731084834-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260731084834-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-07-31T08:48:34+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-07-31T00:04:29.621524+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
   "20260731090037-0001.pdf": {
     "status": "未確認",
     "fax_file": "20260731090037-0001.pdf",
@@ -1376,7 +1362,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 14:47</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-07-31 14:50</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1421,12 +1407,12 @@ const NEEDS_REVIEW_DATA = {"items": [{"type": "root_needs_review", "iv_no": null
 const CHECK_PHOTO_DATA  = [];
 // [PR-HANNYUHYO-CARD-B 2026-06-15]
 const PENDING_HANNYUHYO_DATA = [];
-const RECHECK_CT_DATA = [{"iv_no": "NHA2607-05", "cy_cut": "2026-08-03", "bkg_no": "PCJTYO26075284", "booking_slots": [{"slot_no": 1, "ct_id": "eab3f3f5-3187-f111-ab0f-70a8a588f548", "plant": "", "work_date": null, "item_code": "JOMG"}, {"slot_no": 2, "ct_id": "94bb88f4-3187-f111-ab0f-7ced8dbeef9d", "plant": "興栄紙材", "work_date": "2026-07-31", "item_code": "JOMG"}], "cts": [{"ct_no": "SEKU5656000", "packer": "TOKYO", "seal_from_pdf": "PANP960785", "n_w": null, "t_w": 3700, "g_w": null, "bales": null, "work_date": "2026-07-31", "hannyuhyo_pdf_name": "", "hannyuhyo_pdf_subdir": "", "keisho_photos": [], "keisho_photo_name": "", "keisho_photo_labels": {}}]}];
+const RECHECK_CT_DATA = [];
 // [PR-UNRECEIVED-ALERT 2026-06-24]
 const UNRECEIVED_ALERT_DATA = [];
 // 対象外処理済み搬入票 + 搬入票未着
 const UNMATCHED_PDF_DATA    = [];
-const MISSING_HANNYUHYO_DATA = [{"iv_no": "NHA2607-05", "bkg_no": "PCJTYO26075284", "cy_cut": "2026-08-03", "cts": [{"ct_no": "SEKU5656000", "packer": "TOKYO"}]}];
+const MISSING_HANNYUHYO_DATA = [];
 
 // [PR-UNRECEIVED-ALERT 2026-06-24]
 function renderUnreceivedAlert() {
