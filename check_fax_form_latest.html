@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-08-13 10:38</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-08-13 10:58</div>
   </div>
 </div>
 
@@ -1383,7 +1383,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-08-13 10:38</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-08-13 10:58</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -2523,28 +2523,84 @@ function renderSlotCards() {
   }
 }
 
-// [PR-PROBLEM-CT-DETECT v1 2026-07-27] 문제 CT 표시 + 슬롯 배정 UI
+// [PR-PROBLEM-CT-DETECT v1 2026-07-27 / PR-BULK-ASSIGN-v1 2026-08-13] 문제 CT 표시 + 슬롯 배정 UI
 function renderProblemCts() {
   var area  = document.getElementById('problem-ct-area');
   var cards = document.getElementById('problem-ct-cards');
   if (!area || !cards) return;
   if (!_problemCts || !_problemCts.length) { area.style.display = 'none'; return; }
   area.style.display = '';
-  cards.innerHTML = _problemCts.map(function(pc, i) {
+
+  // ct_id 충돌 CT끼리 그룹화
+  var conflictGroups = {}; // ct_id → [pc, ...]
+  var noIdList = [];       // ct_id 미배정
+  _problemCts.forEach(function(pc) {
+    if (pc.error === 'ctid_conflict' && pc.ct_id) {
+      if (!conflictGroups[pc.ct_id]) conflictGroups[pc.ct_id] = [];
+      conflictGroups[pc.ct_id].push(pc);
+    } else {
+      noIdList.push(pc);
+    }
+  });
+
+  var html = '';
+  var groupIdx = 0;
+
+  // 충돌 그룹 카드
+  Object.keys(conflictGroups).forEach(function(sharedCtId) {
+    var group = conflictGroups[sharedCtId];
+    var gid = 'grp-' + groupIdx++;
+    // 각 CT 행 (슬롯 선택 드롭다운)
+    var rowsHtml = group.map(function(pc, ri) {
+      var selId = gid + '-sel-' + ri;
+      var opts = _slotBookingSlots.map(function(s, j) {
+        var lbl = 'Slot ' + (j+1) + ' — ' + (s.packer_name || s.packer_code || '') +
+                  (s.plant_name ? ' / ' + s.plant_name : '') +
+                  (s.work_date  ? ' ' + s.work_date  : '');
+        return '<option value="' + s.ct_id + '" data-slot="' + (j+1) + '">' + lbl + '</option>';
+      }).join('');
+      return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">' +
+        '<div style="min-width:140px;">' +
+          '<span style="font-size:13px;font-weight:700;color:#dc2626;">' + pc.ct_no + '</span>' +
+          (pc.packer ? ' <span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 5px;border-radius:3px;">' + pc.packer + '</span>' : '') +
+          (pc.seal_no ? '<br><span style="font-size:10px;color:#888;">SEAL: ' + pc.seal_no + '</span>' : '') +
+        '</div>' +
+        '<select id="' + selId + '" data-gid="' + gid + '" data-ri="' + ri + '"' +
+          ' onchange="onConflictSlotChange(\'' + gid + '\',' + group.length + ')"' +
+          ' style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #fca5a5;border-radius:4px;">' +
+          '<option value="" disabled selected>-- 슬롯 선택 --</option>' + opts +
+        '</select>' +
+      '</div>';
+    }).join('');
+
+    html += '<div style="border:2px solid #dc2626;border-radius:6px;padding:12px;margin-bottom:10px;background:#fff;">' +
+      '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:10px;">' +
+        '⚠ ct_id 충돌 — 아래 ' + group.length + '개 CT가 같은 슬롯을 쓰고 있습니다. 각각 다른 슬롯으로 나눠주세요' +
+      '</div>' +
+      rowsHtml +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;">' +
+        '<button onclick="execBulkAssign(\'' + gid + '\',' + JSON.stringify(group.map(function(p){return p.ct_no;})) + ')"' +
+          ' style="font-size:12px;padding:6px 18px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">나누기 실행</button>' +
+        '<span id="' + gid + '-msg" style="font-size:11px;color:#888;"></span>' +
+      '</div>' +
+    '</div>';
+  });
+
+  // ct_id 미배정 CT (기존과 동일, 개별 처리)
+  var singleIdx = 0;
+  noIdList.forEach(function(pc) {
+    var i = 'no-' + singleIdx++;
     var opts = _slotBookingSlots.map(function(s, j) {
       var lbl = 'Slot ' + (j+1) + ' — ' + (s.packer_name || s.packer_code || '') +
                 (s.plant_name ? ' / ' + s.plant_name : '') +
                 (s.work_date  ? ' ' + s.work_date  : '');
       return '<option value="' + s.ct_id + '" data-slot="' + (j+1) + '">' + lbl + '</option>';
     }).join('');
-    var badge = pc.error === 'ctid_conflict'
-      ? '<span style="font-size:10px;background:#dc2626;color:#fff;padding:1px 7px;border-radius:3px;">ct_id 충돌</span>'
-      : '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 7px;border-radius:3px;">ct_id 미배정</span>';
-    return '<div style="border:1px solid #fca5a5;border-radius:5px;padding:10px;margin-bottom:8px;background:#fff;">' +
+    html += '<div style="border:1px solid #fca5a5;border-radius:5px;padding:10px;margin-bottom:8px;background:#fff;">' +
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">' +
         '<span style="font-size:13px;font-weight:700;color:#dc2626;">' + pc.ct_no + '</span>' +
         (pc.packer ? '<span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:3px;">' + pc.packer + '</span>' : '') +
-        badge +
+        '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 7px;border-radius:3px;">ct_id 미배정</span>' +
         (pc.work_date ? '<span style="font-size:10px;color:#888;">' + pc.work_date + '</span>' : '') +
         (pc.seal_no   ? '<span style="font-size:10px;color:#888;">SEAL: ' + pc.seal_no + '</span>' : '') +
       '</div>' +
@@ -2552,17 +2608,70 @@ function renderProblemCts() {
         '<select id="assign-slot-' + i + '" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #fca5a5;border-radius:4px;">' +
           '<option value="" disabled selected>-- 배정 슬롯 선택 --</option>' + opts +
         '</select>' +
-        '<button onclick="execCtAssign(' + JSON.stringify(pc.ct_no) + ',' + i + ')"' +
-          ' style="font-size:12px;padding:6px 16px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">배정</button>' +
+        '<button onclick="execCtAssign(' + JSON.stringify(pc.ct_no) + ',\'assign-slot-' + i + '\')"' +
+          ' style="font-size:12px;padding:6px 16px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">배정</button>' +
       '</div>' +
       '<div id="assign-msg-' + i + '" style="font-size:11px;margin-top:5px;display:none;"></div>' +
     '</div>';
-  }).join('');
+  });
+
+  cards.innerHTML = html;
 }
 
-async function execCtAssign(ctNo, pIdx) {
-  var sel = document.getElementById('assign-slot-' + pIdx);
-  var msg = document.getElementById('assign-msg-' + pIdx);
+// 충돌 그룹 드롭다운 변경 시 다른 드롭다운에서 이미 선택한 슬롯 비활성화
+function onConflictSlotChange(gid, count) {
+  var selected = {};
+  for (var ri = 0; ri < count; ri++) {
+    var sel = document.getElementById(gid + '-sel-' + ri);
+    if (sel && sel.value) selected[sel.value] = ri;
+  }
+  for (var ri2 = 0; ri2 < count; ri2++) {
+    var sel2 = document.getElementById(gid + '-sel-' + ri2);
+    if (!sel2) continue;
+    Array.from(sel2.options).forEach(function(opt) {
+      if (!opt.value) return;
+      opt.disabled = (opt.value in selected) && selected[opt.value] !== ri2;
+    });
+  }
+}
+
+// 충돌 그룹 일괄 배정
+async function execBulkAssign(gid, ctNos) {
+  var msg = document.getElementById(gid + '-msg');
+  var assignments = [];
+  for (var ri = 0; ri < ctNos.length; ri++) {
+    var sel = document.getElementById(gid + '-sel-' + ri);
+    if (!sel || !sel.value) { alert('모든 CT의 슬롯을 선택해 주세요'); return; }
+    var slotNo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].dataset.slot : '';
+    assignments.push({ct_no: ctNos[ri], target_ct_id: sel.value, target_slot_no: slotNo});
+  }
+  if (msg) { msg.style.color = '#888'; msg.textContent = '배정 중...'; }
+  try {
+    var r = await fetch(LAN_SLOT + '/bulk-assign', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({iv_no: _slotIvNo, assignments: assignments})
+    });
+    var data = await r.json();
+    if (data.ok) {
+      if (msg) { msg.style.color = '#16a34a'; msg.textContent = '✓ 완료: ' + data.msg + ' (実況表 갱신 중...)'; }
+      setTimeout(function() {
+        _slotData = null; _slotOrder = []; _problemCts = []; _slotBookingSlots = [];
+        document.getElementById('slot-iv-input').value = _slotIvNo;
+        fetchSlotInfo();
+      }, 3000);
+    } else {
+      if (msg) { msg.style.color = '#dc2626'; msg.textContent = '오류: ' + data.msg; }
+    }
+  } catch(e) {
+    if (msg) { msg.style.color = '#dc2626'; msg.textContent = '통신 오류: ' + e.message; }
+  }
+}
+
+async function execCtAssign(ctNo, selId) {
+  var sel = document.getElementById(typeof selId === 'string' ? selId : 'assign-slot-' + selId);
+  var msgId = typeof selId === 'string' ? 'assign-msg-' + selId.replace('assign-slot-', '') : 'assign-msg-' + selId;
+  var msg = document.getElementById(msgId);
   if (!sel || !sel.value) { alert('슬롯을 선택해 주세요'); return; }
   var targetCtId = sel.value;
   var slotNo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].dataset.slot : '';
