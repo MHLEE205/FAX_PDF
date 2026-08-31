@@ -278,50 +278,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20260829090832-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260829090832-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260829090832-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-08-29T09:08:32+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-08-29T01:06:03.562814+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260829102859-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260829102859-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260829102859-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-08-29T10:28:59+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-08-29T02:05:19.587287+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  },
-  "20260829104542-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20260829104542-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20260829104542-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-08-29T10:45:42+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-08-29T02:05:19.587287+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
