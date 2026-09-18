@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v5.9 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v6.0 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v5.8</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.0</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-18 15:30</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-18 15:37</div>
   </div>
 </div>
 
@@ -478,6 +478,12 @@ async function _doConfirmHannyuhyoCard(idx) {
       bales: parseInt(document.getElementById(`add-bales-${idx}-${n}`)?.value)||null });
   }
   if (!confirmedCts.length) throw new Error('確認済みCTなし (idx=' + idx + ')');
+  // [PR-SLOT-DUPLICATE-CHECK v1 2026-09-18] 중복 slot_no 송신 차단
+  const _slotNos = confirmedCts.map(c => c.slot_no).filter(n => n !== null && n !== undefined);
+  const _dupSlots = _slotNos.filter((n, i) => _slotNos.indexOf(n) !== i);
+  if (_dupSlots.length > 0) {
+    throw new Error('スロット番号が重複しています (スロット' + [...new Set(_dupSlots)].join(', ') + ')。各CTに異なるスロットを選択してください');
+  }
   const now = new Date(); const pad = n => String(n).padStart(2,'0');
   const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const payload = { generated_at: now.toISOString(), type: 'hannyuhyo_confirmed',
@@ -865,6 +871,13 @@ async function _doRecheckConfirm(idx) {
     };
   }).filter(Boolean);
   if (!confirmedCts.length) return;
+  // [PR-SLOT-DUPLICATE-CHECK v1 2026-09-18] 중복 slot_no 송신 차단
+  const _rcSlotNos = confirmedCts.map(c => c.slot_no).filter(n => n !== null && n !== undefined);
+  const _rcDupSlots = _rcSlotNos.filter((n, i) => _rcSlotNos.indexOf(n) !== i);
+  if (_rcDupSlots.length > 0) {
+    alert('スロット番号が重複しています (スロット' + [...new Set(_rcDupSlots)].join(', ') + ')。各CTに異なるスロットを選択してください');
+    return;
+  }
   const now = new Date();
   const ts  = now.toISOString().replace(/[:.]/g,'-').slice(0,19);
   const payload = {
@@ -1383,7 +1396,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-18 15:30</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-18 15:37</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
