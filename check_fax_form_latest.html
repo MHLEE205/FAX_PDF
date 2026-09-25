@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v6.0 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v6.1 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.0</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.1</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-25 11:45</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-25 11:47</div>
   </div>
 </div>
 
@@ -763,8 +763,8 @@ function buildRecheckCard(item, idx) {
           ${(item.booking_slots && item.booking_slots.length > 1) ? `
           <select id="rc-slot-${idx}-${ci}"
             style="font-size:10px;padding:2px 4px;border:2px solid #e57373;border-radius:3px;margin-left:4px;color:#555;"
-            title="⚠️ Slot 選択 (PACKER誤配定修正用)"
-            onchange="this.style.borderColor=this.value?'#27ae60':'#e57373'">
+            title="⚠️ Slot 選択 (PACKER誤配定修正用) — 同一スロット選択時は自動スワップ"
+            onchange="swapRecheckSlot(this,${idx},${ci})">
             <option value="">-- Slot 選択 (任意) --</option>
             ${item.booking_slots.map(s => `<option value="${s.slot_no}">${s.slot_no}. ${s.plant||''} ${s.item_code||''} ${s.work_date||''}</option>`).join('')}
           </select>` : ''}
@@ -805,6 +805,26 @@ function buildRecheckCard(item, idx) {
     <div class="card-body">${ctRows}</div>
     <div class="done-overlay" id="rc-done-${idx}">✅ 送信済み</div>
   </div>`;
+}
+
+// [PR-SLOT-SWAP-v1 2026-09-25] RECHECK CT 슬롯 변경 시 중복 → 자동 스왑
+// 같은 IV(idx)의 다른 CT가 이미 선택한 슬롯이면 서로 교환
+function swapRecheckSlot(sel, idx, ci) {
+  const newSlot = parseInt(sel.value);
+  sel.style.borderColor = newSlot ? '#27ae60' : '#e57373';
+  if (!newSlot) return;
+  const oldSlot = sel.dataset.prevSlot ? parseInt(sel.dataset.prevSlot) : null;
+  // 같은 IV의 다른 슬롯 선택박스 검색
+  document.querySelectorAll(`[id^="rc-slot-${idx}-"]`).forEach(otherSel => {
+    if (otherSel === sel) return;
+    if (parseInt(otherSel.value) === newSlot) {
+      // 스왑: 다른 CT의 slot을 현재 CT의 이전 slot으로
+      otherSel.value = oldSlot || '';
+      otherSel.style.borderColor = (oldSlot ? '#27ae60' : '#e57373');
+      otherSel.dataset.prevSlot = otherSel.value;
+    }
+  });
+  sel.dataset.prevSlot = String(newSlot);
 }
 
 function toggleRecheckConfirm(idx, ci) {
@@ -1367,7 +1387,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-25 11:45</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-25 11:47</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
