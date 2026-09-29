@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.1</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.2</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -637,6 +637,27 @@ function toggleRecheckCtRename(idx, ci) {
   const el = document.getElementById(`rc-rename-${idx}-${ci}`);
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
+// [PR-CT-DELETE-v1 2026-09-29] ct_id なし誤登録CTをLAN서버 경由で削除
+async function deleteCtEntry(ivNo, ctNo) {
+  if (!ivNo || !ctNo) { alert('IV番号/CT番号が取得できません'); return; }
+  if (!confirm(`CT削除: ${ctNo}\n(ct_idなし — スロット未確定CT)\n\n削除しますか？`)) return;
+  try {
+    const r = await fetch('http://192.168.1.34:18765/delete-ct', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({iv_no: ivNo, ct_no: ctNo})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      alert(`✓ ${ctNo} 削除しました。ページを再読込します。`);
+      location.reload();
+    } else {
+      alert(`削除失敗: ${j.msg}`);
+    }
+  } catch(e) {
+    alert(`サーバー接続エラー（LAN内のみ対応）:\n${e}`);
+  }
+}
 function toggleModeDCtRename(idx, ci) {
   const el = document.getElementById(`md-rename-${idx}-${ci}`);
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -760,6 +781,7 @@ function buildRecheckCard(item, idx) {
           ${ct.ct_no}
           ${ct.packer ? `<span style="font-size:10px;color:#1a73e8;background:#e8f0fe;padding:1px 6px;border-radius:3px;margin-left:4px;">${ct.packer}</span>` : ''}
           <button onclick="toggleRecheckCtRename(${idx},${ci})" style="font-size:10px;padding:2px 7px;border:1px solid #e57373;border-radius:3px;background:#fff;color:#e57373;cursor:pointer;margin-left:6px;">CT番号修正</button>
+          ${!ct.ct_id ? `<button onclick="deleteCtEntry('${item.iv_no||''}','${ct.ct_no}')" style="font-size:10px;padding:2px 7px;border:1px solid #b71c1c;border-radius:3px;background:#b71c1c;color:#fff;cursor:pointer;margin-left:4px;" title="ct_idなし — 誤登録CTを削除">🗑 CT削除</button>` : ''}
           ${(item.booking_slots && item.booking_slots.length > 1) ? `
           <select id="rc-slot-${idx}-${ci}"
             style="font-size:10px;padding:2px 4px;border:2px solid #e57373;border-radius:3px;margin-left:4px;color:#555;"
