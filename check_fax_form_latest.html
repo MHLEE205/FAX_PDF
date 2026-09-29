@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-29 17:47</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-29 17:55</div>
   </div>
 </div>
 
@@ -1387,7 +1387,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-29 17:47</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-09-29 17:55</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1436,7 +1436,7 @@ const RECHECK_CT_DATA = [{"iv_no": "NAS2609-05", "pol": "ISHIKARI", "cy_cut": "2
 // [PR-UNRECEIVED-ALERT 2026-06-24]
 const UNRECEIVED_ALERT_DATA = [];
 // [PR-NO-PHOTO-CONFIRMED v1 2026-07-31]
-const NO_PHOTO_CONFIRMED_DATA = [{"iv_no": "NA2609-04", "cts": [{"ct_no": "ONEU1567037", "hannyuhyo_pdf": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NA2609-04\\搬入票\\20260929105319-0001.pdf", "work_date": "2026-09-29", "packer": "HARIMA", "plant": "はりま紙商"}]}, {"iv_no": "NCA2608-23", "cts": [{"ct_no": "FFAU1466995", "hannyuhyo_pdf": null, "work_date": "2026-08-25", "packer": "OKUBO", "plant": ""}]}, {"iv_no": "NCV2609-05", "cts": [{"ct_no": "HASU4383497", "hannyuhyo_pdf": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NCV2609-05\\搬入票\\20260928100801-0001.pdf", "work_date": "2026-09-28", "packer": "HARIMA", "plant": "はりま紙商"}, {"ct_no": "TLLU6892750", "hannyuhyo_pdf": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NCV2609-05\\搬入票\\20260928100801-0001.pdf", "work_date": "2026-09-28", "packer": "HARIMA", "plant": "はりま紙商"}]}, {"iv_no": "NJJ2609-03", "cts": [{"ct_no": "SKHU6472055", "hannyuhyo_pdf": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NJJ2609-03\\搬入票\\新聞(本社)0928.pdf", "work_date": "2026-09-28", "packer": "MIYAZAKI", "plant": "はまだ(岸和田)"}]}];
+const NO_PHOTO_CONFIRMED_DATA = [{"iv_no": "NA2609-04", "cts": [{"ct_no": "ONEU1567037", "hannyuhyo_pdf": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NA2609-04\\搬入票\\20260929105319-0001.pdf", "work_date": "2026-09-29", "packer": "HARIMA", "plant": "はりま紙商"}]}, {"iv_no": "NCA2608-23", "cts": [{"ct_no": "FFAU1466995", "hannyuhyo_pdf": null, "work_date": "2026-08-25", "packer": "OKUBO", "plant": ""}]}, {"iv_no": "NJJ2609-03", "cts": [{"ct_no": "SKHU6472055", "hannyuhyo_pdf": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\NJJ2609-03\\搬入票\\新聞(本社)0928.pdf", "work_date": "2026-09-28", "packer": "MIYAZAKI", "plant": "はまだ(岸和田)"}]}];
 // 対象外処理済み搬入票 + 搬入票未着
 const UNMATCHED_PDF_DATA    = [{"iv_no": "NJJ2609-01", "bkg_no": "HASLJ01260900107", "cy_cut": "2026-09-29", "pdf_names": ["20260911180118-0001.pdf", "DOC260924-20260924095822.pdf"]}, {"iv_no": "NJJ2609-02", "bkg_no": "JP01217412", "cy_cut": "2026-09-30", "pdf_names": ["コンテナ貨物搬入票.pdf", "コンテナ貨物搬入票_1.pdf", "コンテナ貨物搬入票_2.pdf", "コンテナ貨物搬入票_3.pdf", "納品書.pdf", "納品書_1.pdf", "納品書_2.pdf", "納品書_3.pdf", "集荷票.pdf", "集荷票_1.pdf", "集荷票_2.pdf", "集荷票_3.pdf"]}];
 const MISSING_HANNYUHYO_DATA = [{"iv_no": "UNF2609-05", "bkg_no": "I272251026", "cy_cut": "2026-10-01", "cts": [{"ct_no": "SEGU5310625", "packer": "KYOEKI SHOKAI"}]}, {"iv_no": "NSK2609-03", "bkg_no": "TYOGJ2510800", "cy_cut": "2026-10-02", "cts": [{"ct_no": "ONEU6608870", "packer": "SHIZAI"}]}];
