@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v6.3 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v6.4 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.3</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.4</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 13:22</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 13:35</div>
   </div>
 </div>
 
@@ -1416,7 +1416,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 13:22</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 13:35</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1871,11 +1871,11 @@ function buildModeDCard(item, idx) {
   // [PR-PROBLEM-CT-DETECT v1 2026-07-27] 배정 오류 CT 붉은색 표시
   const _pcts = item.problem_cts || [];
   const problemRows = _pcts.length ? '<div style="margin-top:10px;padding:10px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;">' +
-    '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:7px;">⚠ CT 배정 오류 ' + _pcts.length + '건 — SLOT 変更 탭에서 수정 가능</div>' +
+    '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:7px;">⚠ CT配当エラー ' + _pcts.length + '건 — SLOT 変更タブで修正可能</div>' +
     _pcts.map(function(pc) {
       var badge = pc.error === 'ctid_conflict'
-        ? '<span style="font-size:10px;background:#dc2626;color:#fff;padding:1px 6px;border-radius:3px;">ct_id 충돌</span>'
-        : '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:3px;">ct_id 미배정</span>';
+        ? '<span style="font-size:10px;background:#dc2626;color:#fff;padding:1px 6px;border-radius:3px;">ct_id 競合</span>'
+        : '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:3px;">ct_id 未配当</span>';
       return '<div style="border:1px solid #fca5a5;border-radius:4px;padding:7px 10px;margin-bottom:5px;background:#fff;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
         '<span style="font-size:12px;font-weight:700;color:#dc2626;">' + pc.ct_no + '</span>' +
         (pc.packer ? '<span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:3px;">' + pc.packer + '</span>' : '') +
@@ -2564,9 +2564,9 @@ function renderProblemCts() {
   if (!_problemCts || !_problemCts.length) { area.style.display = 'none'; return; }
   area.style.display = '';
 
-  // ct_id 충돌 CT끼리 그룹화
+  // ct_id 競合 CT끼리 그룹화
   var conflictGroups = {}; // ct_id → [pc, ...]
-  var noIdList = [];       // ct_id 미배정
+  var noIdList = [];       // ct_id 未配当
   _problemCts.forEach(function(pc) {
     if (pc.error === 'ctid_conflict' && pc.ct_id) {
       if (!conflictGroups[pc.ct_id]) conflictGroups[pc.ct_id] = [];
@@ -2601,14 +2601,14 @@ function renderProblemCts() {
         '<select id="' + selId + '" data-gid="' + gid + '" data-ri="' + ri + '"' +
           ' onchange="onConflictSlotChange(\'' + gid + '\',' + group.length + ')"' +
           ' style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #fca5a5;border-radius:4px;">' +
-          '<option value="" disabled selected>-- 슬롯 선택 --</option>' + opts +
+          '<option value="" disabled selected>-- スロット選択 --</option>' + opts +
         '</select>' +
       '</div>';
     }).join('');
 
     html += '<div style="border:2px solid #dc2626;border-radius:6px;padding:12px;margin-bottom:10px;background:#fff;">' +
       '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:10px;">' +
-        '⚠ ct_id 충돌 — 아래 ' + group.length + '개 CT가 같은 슬롯을 쓰고 있습니다. 각각 다른 슬롯으로 나눠주세요' +
+        '⚠ ct_id 競合 — 下記の' + group.length + '件のCTが 同じスロットを使用しています。 それぞれ異なるスロットを選択してください' +
       '</div>' +
       rowsHtml +
       '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;">' +
@@ -2619,7 +2619,7 @@ function renderProblemCts() {
     '</div>';
   });
 
-  // ct_id 미배정 CT (기존과 동일, 개별 처리)
+  // ct_id 未配当 CT (기존과 동일, 개별 처리)
   var singleIdx = 0;
   noIdList.forEach(function(pc) {
     var i = 'no-' + singleIdx++;
@@ -2633,13 +2633,13 @@ function renderProblemCts() {
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">' +
         '<span style="font-size:13px;font-weight:700;color:#dc2626;">' + pc.ct_no + '</span>' +
         (pc.packer ? '<span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:3px;">' + pc.packer + '</span>' : '') +
-        '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 7px;border-radius:3px;">ct_id 미배정</span>' +
+        '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 7px;border-radius:3px;">ct_id 未配当</span>' +
         (pc.work_date ? '<span style="font-size:10px;color:#888;">' + pc.work_date + '</span>' : '') +
         (pc.seal_no   ? '<span style="font-size:10px;color:#888;">SEAL: ' + pc.seal_no + '</span>' : '') +
       '</div>' +
       '<div style="display:flex;gap:8px;align-items:center;">' +
         '<select id="assign-slot-' + i + '" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #fca5a5;border-radius:4px;">' +
-          '<option value="" disabled selected>-- 배정 슬롯 선택 --</option>' + opts +
+          '<option value="" disabled selected>-- 配当スロット選択 --</option>' + opts +
         '</select>' +
         '<button onclick="execCtAssign(' + JSON.stringify(pc.ct_no) + ',\'assign-slot-' + i + '\')"' +
           ' style="font-size:12px;padding:6px 16px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">배정</button>' +
@@ -2674,11 +2674,11 @@ async function execBulkAssign(gid, ctNos) {
   var assignments = [];
   for (var ri = 0; ri < ctNos.length; ri++) {
     var sel = document.getElementById(gid + '-sel-' + ri);
-    if (!sel || !sel.value) { alert('모든 CT의 슬롯을 선택해 주세요'); return; }
+    if (!sel || !sel.value) { alert('全CTのスロットを選択してください'); return; }
     var slotNo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].dataset.slot : '';
     assignments.push({ct_no: ctNos[ri], target_ct_id: sel.value, target_slot_no: slotNo});
   }
-  if (msg) { msg.style.color = '#888'; msg.textContent = '배정 중...'; }
+  if (msg) { msg.style.color = '#888'; msg.textContent = '配当中...'; }
   try {
     var r = await fetch(LAN_SLOT + '/bulk-assign', {
       method: 'POST',
@@ -2687,17 +2687,17 @@ async function execBulkAssign(gid, ctNos) {
     });
     var data = await r.json();
     if (data.ok) {
-      if (msg) { msg.style.color = '#16a34a'; msg.textContent = '✓ 완료: ' + data.msg + ' (実況表 갱신 중...)'; }
+      if (msg) { msg.style.color = '#16a34a'; msg.textContent = '✓ 完了: ' + data.msg + ' (実況表 更新中...)'; }
       setTimeout(function() {
         _slotData = null; _slotOrder = []; _problemCts = []; _slotBookingSlots = [];
         document.getElementById('slot-iv-input').value = _slotIvNo;
         fetchSlotInfo();
       }, 3000);
     } else {
-      if (msg) { msg.style.color = '#dc2626'; msg.textContent = '오류: ' + data.msg; }
+      if (msg) { msg.style.color = '#dc2626'; msg.textContent = 'エラー: ' + data.msg; }
     }
   } catch(e) {
-    if (msg) { msg.style.color = '#dc2626'; msg.textContent = '통신 오류: ' + e.message; }
+    if (msg) { msg.style.color = '#dc2626'; msg.textContent = '통신 エラー: ' + e.message; }
   }
 }
 
@@ -2705,10 +2705,10 @@ async function execCtAssign(ctNo, selId) {
   var sel = document.getElementById(typeof selId === 'string' ? selId : 'assign-slot-' + selId);
   var msgId = typeof selId === 'string' ? 'assign-msg-' + selId.replace('assign-slot-', '') : 'assign-msg-' + selId;
   var msg = document.getElementById(msgId);
-  if (!sel || !sel.value) { alert('슬롯을 선택해 주세요'); return; }
+  if (!sel || !sel.value) { alert('スロットを選択してください'); return; }
   var targetCtId = sel.value;
   var slotNo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].dataset.slot : '';
-  if (msg) { msg.style.display = ''; msg.style.color = '#888'; msg.textContent = '배정 중...'; }
+  if (msg) { msg.style.display = ''; msg.style.color = '#888'; msg.textContent = '配当中...'; }
   try {
     var r = await fetch(LAN_SLOT + '/ct-assign', {
       method: 'POST',
@@ -2718,7 +2718,7 @@ async function execCtAssign(ctNo, selId) {
     });
     var data = await r.json();
     if (data.ok) {
-      if (msg) { msg.style.color = '#16a34a'; msg.textContent = '✓ 배정 완료: ' + data.msg + ' (実況表 갱신 중...)'; }
+      if (msg) { msg.style.color = '#16a34a'; msg.textContent = '✓ 배정 完了: ' + data.msg + ' (実況表 更新中...)'; }
       setTimeout(function() {
         var area = document.getElementById('slot-action-area');
         if (area) area.style.display = 'none';
@@ -2727,10 +2727,10 @@ async function execCtAssign(ctNo, selId) {
         fetchSlotInfo();
       }, 3000);
     } else {
-      if (msg) { msg.style.color = '#dc2626'; msg.textContent = '오류: ' + data.msg; }
+      if (msg) { msg.style.color = '#dc2626'; msg.textContent = 'エラー: ' + data.msg; }
     }
   } catch(e) {
-    if (msg) { msg.style.color = '#dc2626'; msg.textContent = '통신 오류: ' + e.message; }
+    if (msg) { msg.style.color = '#dc2626'; msg.textContent = '통신 エラー: ' + e.message; }
   }
 }
 
@@ -2823,8 +2823,8 @@ function renderSlotChange() {
           '<div id="slot-cards-area"></div>' +
         '</div>' +
         '<div id="problem-ct-area" style="display:none;background:#fff;border:1px solid #fca5a5;border-radius:8px;padding:16px;margin-bottom:12px;">' +
-          '<div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px;">⚠ CT 배정 오류</div>' +
-          '<div style="font-size:11px;color:#888;margin-bottom:10px;">ct_id 충돌 또는 미배정 CT입니다. 올바른 슬롯을 선택하여 배정해 주세요.</div>' +
+          '<div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px;">⚠ CT配当エラー</div>' +
+          '<div style="font-size:11px;color:#888;margin-bottom:10px;">ct_id 競合 또는 미배정 CT입니다. 올바른 슬롯을 선택하여 배정해 주세요.</div>' +
           '<div id="problem-ct-cards"></div>' +
         '</div>' +
         '<div id="slot-preview" style="display:none;background:#fff;border:1px solid #f5dfa0;border-radius:8px;padding:12px 16px;margin-bottom:12px;"></div>' +
