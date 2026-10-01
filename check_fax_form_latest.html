@@ -139,7 +139,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 14:57</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 15:00</div>
   </div>
 </div>
 
@@ -1416,7 +1416,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 14:57</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-01 15:00</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1876,12 +1876,17 @@ function buildModeDCard(item, idx) {
       var badge = pc.error === 'ctid_conflict'
         ? '<span style="font-size:10px;background:#dc2626;color:#fff;padding:1px 6px;border-radius:3px;">ct_id 競合</span>'
         : '<span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:3px;">ct_id 未配当</span>';
+      // [PR-CT-DELETE-v1 fix 2026-10-01] 競合・未配当 CT에도 CT削除 버튼 추가
+      var delBtn = '<button onclick="deleteCtEntry(\'' + item.iv_no + '\',\'' + pc.ct_no + '\')" ' +
+        'style="font-size:10px;padding:2px 7px;border:1px solid #b71c1c;border-radius:3px;background:#b71c1c;color:#fff;cursor:pointer;margin-left:auto;" ' +
+        'title="OCR誤読・競合CT削除">🗑 CT削除</button>';
       return '<div style="border:1px solid #fca5a5;border-radius:4px;padding:7px 10px;margin-bottom:5px;background:#fff;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
         '<span style="font-size:12px;font-weight:700;color:#dc2626;">' + pc.ct_no + '</span>' +
         (pc.packer ? '<span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:3px;">' + pc.packer + '</span>' : '') +
         badge +
         (pc.work_date ? '<span style="font-size:10px;color:#888;">' + pc.work_date + '</span>' : '') +
         (pc.seal_no   ? '<span style="font-size:10px;color:#888;">SEAL: ' + pc.seal_no + '</span>' : '') +
+        delBtn +
       '</div>';
     }).join('') +
   '</div>' : '';
