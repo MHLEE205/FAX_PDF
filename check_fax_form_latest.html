@@ -882,7 +882,7 @@ function toggleRecheckConfirm(idx, ci) {
   const item = (RECHECK_CT_DATA || [])[idx];
   if (!item) return;
   const key = `${idx}-${ci}`;  // [PR-RECHECK-PENDING-CT-KEY-v1 2026-06-26] CT 단위
-  if (!isChecked) { recheckPending.add(key); } else { recheckPending.delete(key); }
+  if (!isChecked) { recheckPending.add(key); showSendAllHint(); } else { recheckPending.delete(key); }
   _refreshSendAllBtn();
 }
 
