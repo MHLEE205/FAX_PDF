@@ -49,6 +49,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 .btn-unmatch { font-size: 12px; padding: 5px 14px; border: 1px solid #e04040; border-radius: 4px; background: #fff5f5; color: #e04040; cursor: pointer; }
 .btn-unmatch:hover { background: #ffe0e0; }
 .done-overlay { display: none; padding: 12px 14px; background: #f0fff0; border-top: 1px solid #a8d5b0; font-size: 12px; color: #27ae60; }
+#toast-sendall { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #1565c0; color: #fff; padding: 11px 22px; border-radius: 8px; font-size: 13px; z-index: 99999; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.25); pointer-events: none; white-space: nowrap; }
 .done-overlay.show { display: block; }
 .summary { background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; padding: 16px 20px; margin-top: 16px; display: none; }
 .summary.show { display: block; }
@@ -139,7 +140,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 14:49</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 14:53</div>
   </div>
 </div>
 
@@ -1034,6 +1035,14 @@ function buildCard(key, item) {
   return div;
 }
 
+// ── 一括送信ヒント toast ──────────────────────────────────────────────
+function showSendAllHint() {
+  const t = document.getElementById('toast-sendall');
+  if (!t) return;
+  t.style.display = 'block';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.display = 'none'; }, 5000);
+}
 // ── 確認完了 [PR-HANNYUHYO-CONFIRM-TOGGLE 2026-06-20] 토글 ──────────
 function confirmItem(key) {
   if (state[key].status === '確認予定') {
@@ -1075,7 +1084,7 @@ function confirmItem(key) {
   doneEl.classList.add('show');
   const btn = card.querySelector('.btn-confirm');
   if (btn) { btn.textContent = '↩ 取消'; btn.style.background = '#e67e22'; btn.style.borderColor = '#e67e22'; }
-  _refreshSendAllBtn(); updateProgress();
+  _refreshSendAllBtn(); updateProgress(); showSendAllHint();
 }
 
 // ── スキップ ──────────────────────────────────────────────
@@ -1431,7 +1440,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 14:49</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 14:53</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -2087,7 +2096,7 @@ function confirmHannyuhyoCard(idx) {
   const t = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
   if (doneEl) { doneEl.textContent=`🕐 確認予定（${t}）— もう一度押すと取消`; doneEl.classList.add('show'); }
   if (btn) { btn.textContent='↩ 取消'; btn.style.background='#e67e22'; btn.style.borderColor='#e67e22'; }
-  _refreshSendAllBtn();
+  _refreshSendAllBtn(); showSendAllHint();
 }
 
 // ── ✉ リマインダー [2026-06-29] ──────────────────────────────
@@ -3205,5 +3214,6 @@ async function nmDelete(filename, btn) {
   }
 }
 </script>
+<div id="toast-sendall">📋 確認予定に設定しました。上部の「📤 一括送信」ボタンを押すと実況表へ反映されます。</div>
 </body>
 </html>
