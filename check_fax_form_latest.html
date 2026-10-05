@@ -147,7 +147,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:41</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:43</div>
   </div>
 </div>
 
@@ -1493,6 +1493,7 @@ init();
   <div class="page-header">
     <h1>搬入票 確認 <span style='font-size:13px;color:#888;font-weight:normal;'>モード D</span></h1>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+      <div id="send-log-d" style="display:none; font-size:10px; color:#fff; background:#4a148c; padding:3px 10px; border-radius:4px; max-width:500px; text-align:right;"></div>
       <div style="display:flex; align-items:center; gap:8px;">
         <div class="meta" id="mode-d-meta"></div>
         <button id="btn-jikkyou-d" onclick="_triggerJikkyouUpdate('btn-jikkyou-d')"
@@ -1501,8 +1502,8 @@ init();
           📊 実況表 UPDATE
         </button>
         <button id="btn-update-d" onclick="_triggerNotifyUpdate('btn-update-d')"
-          style="font-size:11px; padding:3px 10px; border:1px solid #27ae60; border-radius:4px;
-                 background:#27ae60; color:#fff; cursor:pointer; margin-right:4px;">
+          style="font-size:11px; padding:3px 10px; border:1px solid #66bb6a; border-radius:4px;
+                 background:#66bb6a; color:#fff; cursor:pointer; margin-right:4px;">
           🔄 UPDATE
         </button>
         <button id="btn-send-all-d" onclick="sendAll()"
@@ -1510,8 +1511,12 @@ init();
                  background:#6a1b9a; color:#fff; cursor:pointer; display:none; margin-right:6px; font-weight:700; box-shadow:0 2px 6px rgba(106,27,154,0.4);">
           📤 一括送信
         </button>
+        <button onclick="document.getElementById('help-panel').style.display=document.getElementById('help-panel').style.display==='none'?'block':'none'"
+          style="font-size:11px; padding:3px 8px; border:1px solid #90caf9; border-radius:4px; background:#e3f2fd; color:#1565c0; cursor:pointer; font-weight:600;" title="ボタン機能ガイド">
+          ❓ 使い方
+        </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:41</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:43</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
