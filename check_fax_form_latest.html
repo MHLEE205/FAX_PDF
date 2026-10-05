@@ -146,7 +146,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:47</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:50</div>
   </div>
 </div>
 
@@ -156,15 +156,15 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
   <table style="width:100%; border-collapse:collapse;">
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#1976d2; white-space:nowrap;">📤 一括送信</td>
-      <td style="padding:6px 0;">確認予定にした案件をまとめてサーバーへ送信し、実況表へ反映します。「実況表へ反映」ボタンを押した後に必ず押してください。</td>
+      <td style="padding:6px 0;">「確認予定」状態の案件をまとめてサーバーへ送信し、実況表へ反映します。「実況表へ反映」ボタンを押した後に必ず押してください。</td>
     </tr>
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#1565c0; white-space:nowrap;">実況表へ反映</td>
-      <td style="padding:6px 0;">スロットを選択 → CT確認 → このボタンの順で押します。押すと「確認予定」状態になります。その後「一括送信」で実況表へ反映されます。</td>
+      <td style="padding:6px 0;">① スロット選択 → ② CT確認 → ③ このボタンの順で操作します。押すと「確認予定」状態になります。その後「📤 一括送信」を押すと実況表へ反映されます。</td>
     </tr>
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; white-space:nowrap;">🔵 CT確認</td>
-      <td style="padding:6px 0;">各CTの内容（SEAL・N/W・T/W・G/W・bales）を確認し、スロットを選択してから押します。全CTをCT確認後に「実況表へ反映」を押してください。</td>
+      <td style="padding:6px 0;">各CTの内容（SEAL・N/W・T/W・G/W・bales）を確認し、スロットを選択してから押します。全CTのCT確認が完了したら「実況表へ反映」を押してください。</td>
     </tr>
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#e65100; white-space:nowrap;">BKG変更</td>
@@ -172,19 +172,31 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
     </tr>
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#e04040; white-space:nowrap;">対象外</td>
-      <td style="padding:6px 0;">当社案件ではない書類（他社FAX・誤受信）の場合に使用。搬入票PDFが _unmatched/ フォルダへ移動されます。確認ダイアログが表示されます。</td>
+      <td style="padding:6px 0;">当社案件ではない書類（他社FAX・誤受信など）の場合に使用。搬入票PDFが _unmatched/ フォルダへ移動されます。押すと確認ダイアログが表示されます。</td>
     </tr>
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#6a1b9a; white-space:nowrap;">📊 実況表 UPDATE</td>
-      <td style="padding:6px 0;">実況表.htmlを強制再生成します（phase4 + notify実行）。データは変わらず、表示だけを最新化します。</td>
+      <td style="padding:6px 0;">
+        実況表.htmlを強制再生成します（phase4 + notify実行）。<br>
+        <b>使用タイミング：</b>containers.jsonはすでに更新済みなのに実況表の画面が古い状態のまま変わらない時。<br>
+        具体的には以下のケースで使用してください：<br>
+        &nbsp;・ 一括送信後に実況表が変わらなかった時<br>
+        &nbsp;・ 手動でデータを修正したが実況表に反映されなかった時<br>
+        &nbsp;・ cronが終わったのに実況表の表示がおかしい時
+      </td>
     </tr>
     <tr>
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#27ae60; white-space:nowrap;">🔄 UPDATE</td>
-      <td style="padding:6px 0;">このページのデータをサーバーから再読み込みします。新しい案件が届いた場合などに使用します。</td>
+      <td style="padding:6px 0;">
+        このページのデータをサーバーから再読み込みします。新しい案件が届いた場合などに使用します。<br>
+        <b>📊 実況表 UPDATEとの違い：</b><br>
+        &nbsp;・ 📊 実況表 UPDATE → 実況表.html自体をサーバー側で再生成<br>
+        &nbsp;・ 🔄 UPDATE → この入力TOOLの画面データを新しく読み直す
+      </td>
     </tr>
   </table>
   <div style="margin-top:10px; padding:8px 12px; background:#fff3e0; border-radius:6px; color:#e65100; font-size:11px;">
-    ⚠ 再確認CT（下部セクション）の「実況表へ反映」も同様に一括送信が必要です。値を修正してから押してください。
+    ⚠ 再確認CT（下部セクション）の「実況表へ反映」も同様に「一括送信」が必要です。値を修正・確認してから押してください。
   </div>
 </div>
 
@@ -1485,7 +1497,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:47</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:50</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
