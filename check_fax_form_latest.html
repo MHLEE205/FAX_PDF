@@ -140,7 +140,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:43</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:44</div>
   </div>
 </div>
 
@@ -1025,7 +1025,7 @@ function buildCard(key, item) {
       <button class="btn-add-block" onclick="addBlock('${key}')">+ 別の搬入票を追加</button>
       <div class="card-footer">
         <button class="btn-skip" onclick="skipItem('${key}')" style="display:none">スキップ</button>
-        <button class="btn-unmatch" onclick="markUnmatched('${key}')" style="display:none">対象外</button>
+        <button class="btn-unmatch" onclick="markUnmatched('${key}')">対象外</button>
         <button class="btn-confirm" onclick="confirmItem('${key}')">実況表へ反映</button>
       </div>
     </div>
@@ -1441,7 +1441,7 @@ init();
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:43</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-05 15:44</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
@@ -1948,7 +1948,7 @@ function buildModeDCard(item, idx) {
       <div class="card-footer">
         <button onclick="document.getElementById('bkg-reassign-form-${idx}').style.display='block'" style="padding:6px 14px;background:#fff8e1;color:#e65100;border:1px solid #f9a825;border-radius:6px;font-size:13px;cursor:pointer;margin-right:6px;">BKG 変更</button>
         <button class="btn-skip" onclick="skipMdCard(${idx})" style="display:none">スキップ</button>
-        <button class="btn-unmatch" onclick="markUnmatchedMd(${idx})" style="display:none">対象外</button>
+        <button class="btn-unmatch" onclick="markUnmatchedMd(${idx})">対象外</button>
         <button class="btn-confirm" onclick="confirmHannyuhyoCard(${idx})">実況表へ反映</button>
       </div>
     </div>
