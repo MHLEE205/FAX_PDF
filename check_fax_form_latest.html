@@ -126,8 +126,8 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
     <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
       <span id="user-display" style="font-size:12px; color:#555;"></span>
       <button id="btn-send-all" onclick="sendAll()"
-        style="font-size:11px; padding:3px 10px; border:1px solid #6a1b9a; border-radius:4px;
-               background:#6a1b9a; color:#fff; cursor:pointer; display:none; margin-right:4px;">
+        style="font-size:14px; padding:7px 18px; border:2px solid #6a1b9a; border-radius:6px;
+               background:#6a1b9a; color:#fff; cursor:pointer; display:none; margin-right:6px; font-weight:700; box-shadow:0 2px 6px rgba(106,27,154,0.4);">
         📤 一括送信
       </button>
       <button id="btn-jikkyou-fax" onclick="_triggerJikkyouUpdate('btn-jikkyou-fax')"
@@ -147,7 +147,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:35</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:36</div>
   </div>
 </div>
 
@@ -661,8 +661,8 @@ async function sendAll() {
     _lockUpdateBtns(); // [PR-UPDATE-LOCK-AFTER-SEND-v1 2026-06-25]
     // [PR-SEND-ALL-REENABLE-v1 2026-06-26] 成功後10秒で再クリック可能に
     setTimeout(() => {
-      if (btn)  { btn.disabled=false; btn.textContent='📤 一括送信'; btn.style.background='#6a1b9a'; btn.style.borderColor='#6a1b9a'; }
-      if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; btnD.style.background='#6a1b9a'; btnD.style.borderColor='#6a1b9a'; }
+      if (btn)  { btn.disabled=false; btn.textContent='📤 一括送信'; btn.style.background='#6a1b9a'; btn.style.borderColor='#6a1b9a'; btn.style.fontSize='14px'; btn.style.padding='7px 18px'; }
+      if (btnD) { btnD.disabled=false; btnD.textContent='📤 一括送信'; btnD.style.background='#6a1b9a'; btnD.style.borderColor='#6a1b9a'; btnD.style.fontSize='14px'; btnD.style.padding='7px 18px'; }
       _refreshSendAllBtn(); // 次の待機件数を即時反映
     }, 10000);
   }
@@ -1506,12 +1506,12 @@ init();
           🔄 UPDATE
         </button>
         <button id="btn-send-all-d" onclick="sendAll()"
-          style="font-size:11px; padding:3px 10px; border:1px solid #6a1b9a; border-radius:4px;
-                 background:#6a1b9a; color:#fff; cursor:pointer; display:none; margin-right:4px;">
+          style="font-size:14px; padding:7px 18px; border:2px solid #6a1b9a; border-radius:6px;
+                 background:#6a1b9a; color:#fff; cursor:pointer; display:none; margin-right:6px; font-weight:700; box-shadow:0 2px 6px rgba(106,27,154,0.4);">
           📤 一括送信
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:35</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-06 08:36</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
