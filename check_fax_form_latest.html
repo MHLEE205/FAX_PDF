@@ -336,22 +336,7 @@ async function _checkAuth() {
 }
 
 // ── データ (notify.py が埋め込む) ─────────────────────────
-const CONFIRMED_DATA = {
-  "20261005131606-0001.pdf": {
-    "status": "未確認",
-    "fax_file": "20261005131606-0001.pdf",
-    "fax_path": "C:\\Users\\LEENEAR_RPA\\株式会社 リニア\\leenearsite1 - PHOTO\\_FAX\\_CHECK_FAX\\20261005131606-0001.pdf",
-    "failure_type": "OCR完全失敗",
-    "packer_estimate": null,
-    "ocr_bkg": [],
-    "ocr_ct": [],
-    "received_at": "2026-10-05T13:16:06+09:00",
-    "detail": "OCR完全失敗",
-    "generated_at": "2026-10-05T05:22:03.369689+00:00",
-    "human_input": {},
-    "confirmed_at": null
-  }
-};
+const CONFIRMED_DATA = {};
 
 function updatePlantField(key, n) {
   const packerEl = document.getElementById(`${key}_packer_${n}`);
