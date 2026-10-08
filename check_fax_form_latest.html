@@ -113,7 +113,10 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <!-- ❓ 使い方ガイド パネル — main-content 外に配置 (搬入票確認タブでも動作するよう) -->
 <div id="help-panel" style="display:none; position:fixed; top:60px; right:12px; z-index:9999; background:#f0f7ff; border:1px solid #90caf9; border-radius:8px; padding:16px 20px; font-size:12px; line-height:1.8; max-width:700px; max-height:80vh; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
-  <div style="font-weight:700; font-size:13px; color:#1565c0; margin-bottom:10px;">📖 ボタン機能ガイド</div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="font-weight:700; font-size:13px; color:#1565c0;">📖 ボタン機能ガイド</div>
+    <button onclick="document.getElementById('help-panel').style.display='none'" style="background:none; border:none; font-size:18px; color:#888; cursor:pointer; line-height:1; padding:0 4px;" title="閉じる">✕</button>
+  </div>
   <table style="width:100%; border-collapse:collapse;">
     <tr style="border-bottom:1px solid #cce0ff;">
       <td style="padding:6px 12px 6px 0; font-weight:600; color:#6a1b9a; white-space:nowrap;">📤 一括送信</td>
@@ -197,7 +200,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-08 11:20</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-08 11:21</div>
   </div>
 </div>
 
@@ -1501,7 +1504,7 @@ init();
           ❓ 使い方
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-08 11:20</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-08 11:21</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
