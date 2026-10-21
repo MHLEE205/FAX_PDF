@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>写真／搬入票確認TOOL v6.7 | LEENAI Automation</title>
+<title>写真／搬入票確認TOOL v6.8 | LEENAI Automation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; padding: 20px; }
@@ -169,7 +169,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
 
 <div class="page-header">
   <div>
-    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.7</span></h1>
+    <h1>写真／搬入票確認TOOL <span style="font-size:13px;color:#888;font-weight:normal;">v6.8</span></h1>
     <div class="badges" id="badge-area"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progress" style="width:0%"></div></div>
   </div>
@@ -200,7 +200,7 @@ body { font-family: 'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif; font-size:
       </button>
       <button id="logout-btn" onclick="logout()" style="font-size:11px; padding:3px 10px; border:1px solid #ddd; border-radius:4px; background:#f8f8f8; color:#666; cursor:pointer; display:none;">ログアウト</button>
     </div>
-    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-21 15:01</div>
+    <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-21 15:03</div>
   </div>
 </div>
 
@@ -1031,13 +1031,31 @@ async function _doRecheckConfirm(idx) {
     generated_at: now.toISOString(), type: 'recheck_ct_confirmed',
     iv_no: item.iv_no, confirmed_cts: confirmedCts,
   };
+  // [PR-RECHECK-DIRECT-APPLY v1 2026-10-21] 搬入票タブと同じく LAN サーバへ直接 apply (即時反映)
+  // 経緯: SharePoint → OneDrive 同期停止で recheck_confirmed が処理されない事象 (10/20〜)
+  // サーバ /apply-confirmed は recheck_ct_confirmed 形式も処理 (apply_confirmed.py)。LAN 外 / 未起動時は SharePoint 経由で後処理
+  let _directOk = false;
+  try {
+    const _r = await fetch('http://192.168.1.34:18765/apply-confirmed',
+      { method: 'POST', body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000) });
+    _directOk = !!(_r && _r.ok);
+  } catch(e) { /* LAN 外 またはサーバ未起動 — SharePoint 経由で処理 */ }
   const pathSegs = ['古紙','-. 古紙書類','▲ LEENAI 通関作業中','PHOTO','_HANNYUHYO_CONFIRMED',`recheck_confirmed_${ts}.json`];
-  await _uploadJsonToPath(pathSegs, JSON.stringify(payload, null, 2), token);
+  try {
+    await _uploadJsonToPath(pathSegs, JSON.stringify(payload, null, 2), token);
+  } catch(e) {
+    if (!_directOk) throw e;   // 直接 apply も SharePoint も失敗した時のみエラー
+  }
+  const _msg = _directOk
+    ? '✅ 送信完了 — 実況表へ反映中です（1分程度。画面は Ctrl+Shift+R で更新）'
+    : '✅ 送信完了 — サーバ未接続のため、次回cron実行時に実況表へ反映されます';
   const doneEl = document.getElementById(`rc-done-${idx}`);
-  if (doneEl) { doneEl.textContent = '✅ 送信完了 — 次回cron実行時に実況表へ反映されます'; doneEl.classList.add('show'); }
+  if (doneEl) { doneEl.textContent = _msg; doneEl.classList.add('show'); }
   // 送信完了トースト
   const _t = document.getElementById('toast-sendall');
-  if (_t) { _t.textContent = '✅ 再確認CT送信完了。次回cron実行時に実況表へ反映されます。'; _t.style.display='block'; clearTimeout(_t._tid); _t._tid = setTimeout(()=>{_t.style.display='none';},7000); }
+  if (_t) { _t.textContent = '✅ 再確認CT ' + _msg.replace('✅ ', ''); _t.style.display='block'; clearTimeout(_t._tid); _t._tid = setTimeout(()=>{_t.style.display='none';},7000); }
 }
 // ── END PR-RECHECK-CT-CONFIRM ────────────────────────────────────────
 
@@ -1617,7 +1635,7 @@ init();
           ❓ 使い方
         </button>
       </div>
-      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-21 15:01</div>
+      <div style="font-size:10px; color:#aaa; text-align:right; margin-top:2px;">更新: 2026-10-21 15:03</div>
     </div>
   </div>
   <div id="mode-d-cards" style="margin-top:12px;"></div>
